@@ -1,0 +1,153 @@
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>歷史紀錄</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5; /* 背景色 */
+        }
+
+        select, input, button {
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #e03737;
+            color: #fff;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #b63131;
+        }
+
+        #upload-container {
+            display: flex;
+            background-color: #fff; /* 容器背景色 */
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+        }
+
+        #description-container {
+            width: 400px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-left: 20px;
+            position: relative; 
+        }
+
+        #description-container::after {
+            content: "";
+            display: block;
+            position: absolute;
+            bottom: 50%; 
+            left: 0;
+            width: 100%;
+            height: 1px; /* 分隔線高度 */
+            background-color: #706f6f; /* 分隔線顏色 */
+            content: '';
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <button type="button" onclick="backToMain()">繼續辨識</button>
+    </div>
+    <div id="upload-container">
+        <div id="lefttop">
+            <ul id="usernameDisplay"></ul>
+        </div><div id="lefttop">
+                <ul id="usernameDisplay"></ul>
+            </div>
+        <div id="description-container">
+            <h2>選擇紀錄</h2>
+            <form id="history-form">
+                <label for="upload-time">Select Upload Time:</label>
+                <select id="upload-time"></select>
+                <button type="button" onclick="viewHistory()">查看紀錄</button>
+            </form>
+        </div>
+        <div id="history-content"></div>
+    </div>
+
+    <script>
+
+        function backToMain() {
+            // 歷史紀錄頁面的URL
+            // 進行跳轉
+            location.assign("main.html?username=" + encodeURIComponent(username));
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username');
+        // 找到要顯示 username 的元素
+        const usernameDisplayElement = document.getElementById('usernameDisplay');
+
+        // 更新元素的內容以顯示 username
+        if (username) {
+            usernameDisplayElement.textContent = '使用者: ' + username;
+        } else {
+            usernameDisplayElement.textContent = 'Username 未提供';
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+        var url = 'http://127.0.0.1:8000/get_recent_upload_times/';
+        const formData = new FormData();
+
+        formData.append('username', username);
+        axios.post(url,formData)
+            .then(function(response) {
+                var uploadTimes = response.data;
+                var selectElement = document.getElementById('upload-time');
+                selectElement.innerHTML = '';  // 清空选择框
+                
+                uploadTimes.forEach(function(time) {
+                    var option = document.createElement('option');
+                    option.value = time;
+                    option.textContent = time;
+                    selectElement.appendChild(option);
+                });
+            })
+            .catch(function(error) {
+                console.error('Error fetching upload times:', error);
+            });
+        });
+
+        function viewHistory() {
+            var selectedTime = document.getElementById('upload-time').value;
+    
+            axios.post('http://127.0.0.1:8000/get_history/', { username: username, selectedTime: selectedTime })
+                .then(function(response) {
+                    var historyContent = document.getElementById('history-content');
+                    if (response.data.error) {
+                        historyContent.innerHTML = `<p>${response.data.error}</p>`;
+                    } else {
+                        console.log(response.data.uploadedFileUrl,response.data.suggestionContent)
+                        let videoUrl = response.data.uploadedFileUrl
+                        
+                        var videoHtml = `<h2>Uploaded File:</h2>
+                                         <video width="320" height="240" controls>
+                                             <source src="${videoUrl}" type="video/mp4">
+                                             Your browser does not support the video tag.
+                                         </video>`;
+                        var suggestionHtml = `<h2>Suggestion:</h2>
+                                              <pre>${response.data.suggestionContent}</pre>`;
+                        historyContent.innerHTML = videoHtml + suggestionHtml;
+                    }
+                })
+                .catch(function(error) {
+                    console.error('Error fetching history:', error);
+                });
+        }
+        
+    </script>
+</body>
+</html>

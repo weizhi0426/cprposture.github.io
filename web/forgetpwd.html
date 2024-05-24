@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>找回密碼</title>
+    <link rel="icon" href="/static/images/favicon.ico">
+    <link href="/static/plugins/bootstrap-5.0.0-beta1-dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/master.css" rel="stylesheet">
+</head>
+
+<body>
+    <form action="" method="post" class="forget-password-form">
+        {% csrf_token %}
+        <h4>Reset Password</h4>
+        <input type="text" name="username" placeholder="Input Your Username" class="forget-password-input" />
+        <input type="submit" value="RESET" class="login-button" />
+        <span class="forget-password-tips">{{forget_password_tips}}</span>
+        <a href="/login/" class="forget-password-tips">Return Login</a>
+    </form>
+</body>
+</html>

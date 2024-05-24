@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>影片上傳網站</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                background-color: #f5f5f5; /* 背景色 */
+            }
+    
+            #top{
+                text-align: right;
+            }
+            #lefttop{
+                font-weight: bold;
+            }
+            #upload-container {
+                display: flex;
+                background-color: #fff; /* 容器背景色 */
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+                align-items: flex-start
+            }
+    
+            #upload-form {
+                flex: 1; /* 影片框下方的寬度 */
+            }
+    
+            #video-container {
+                width: calc(100% - 400px);
+                background-color: #f0f0f0; /* 影片框背景色 */
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+            }
+       
+            #progress-bar {
+                width: 0;
+                height: 20px;
+                background-color: #4CAF50;
+                margin-top: 10px;
+                border-radius: 4px;
+            }
+    
+            #uploaded-video {
+                width: 100%;
+                margin-top: 10px;
+                border-radius: 8px;
+            }
+    
+            #description-container {
+                width: 400px;
+                padding: 20px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                margin-left: 20px;
+                position: relative; 
+            }
+    
+            #description-container::after {
+                content: "";
+                display: block;
+                position: absolute;
+                bottom: 50%; 
+                left: 0;
+                width: 100%;
+                height: 1px; /* 分隔線高度 */
+                background-color: #706f6f; /* 分隔線顏色 */
+                content: '';
+            }
+    
+    
+            select, input, button {
+                margin-bottom: 10px;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+            }
+    
+            button {
+                background-color: #e03737;
+                color: #fff;
+                cursor: pointer;
+            }
+    
+            button:hover {
+                background-color: #b63131;
+            }
+    
+    
+        </style>
+    </head>
+<body>
+    
+
+    <div id="top">
+        <button type="button" onclick="viewHistory()">查看歷史紀錄</button>
+        
+    </div>
+    
+    <video id="videoElement2" controls autoplay></video>
+    
+    <div id="upload-container">
+        <div id="video-container">
+            <h2>影片</h2> 
+            <div id="lefttop">
+                <ul id="usernameDisplay"></ul>
+            </div>
+            <video controls id="uploaded-video"></video>
+        </div>
+
+        <div id="description-container">
+            <h2>評分</h2>
+            <p>建議</p>
+        </div>
+    </div>
+    <!-- <canvas id="videoCanvas" width="640" height="480"></canvas> -->
+    <div id="upload-form">
+        <form id="video-upload-form">
+            <select name="rating" id="rating">
+                <option value="1">辨識項目</option>
+                <option value="2">心肺復甦術</option>
+                <option value="3">復甦姿勢</option>
+                <option value="4">哈姆立克法</option>
+            </select>
+            <input type="file" accept="video/*,image/*" name="video" id="fileInput">
+            <button type='button' onclick="uploadVideo()">上傳影片</button>
+            <button type="button" onclick="Recognize()">開始辨識</button>
+            <button type="button" onclick="refreshPreview()">刷新</button>
+        </form>
+        <div id="progress-bar"></div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        let uploadedVideoURL = null;
+
+        document.getElementById('fileInput').addEventListener('change', (event) => {
+            // 選擇完檔案後顯示預覽
+            previewVideo(event.target.files[0]);
+        });
+
+        function viewHistory() {
+            // 歷史紀錄頁面的URL
+            // 進行跳轉
+            window.location.href = 'selecthistory.html?username=' + encodeURIComponent(username);
+        }
+
+        function previewVideo(file) {
+            var uploadedVideoURL = URL.createObjectURL(file);
+            document.getElementById('uploaded-video').src = uploadedVideoURL;
+        }
+
+        function refreshPreview() {
+            // 清空影片預覽
+            document.getElementById('uploaded-video').src = '';
+            // 清空選擇的檔案
+            document.getElementById('video-input').value = '';
+        }
+        function uploadVideo() {
+            const input = document.getElementById('fileInput');
+            const file = input.files[0];
+            console.log(file)
+            
+            if (!file) {
+                alert('請選擇一個檔案.');
+                return;
+            }
+
+            const allowedTypes = ['image/jpg','image/jpeg', 'image/png', 'video/mp4', 'video/avi', 'video/mov', 'video/mkv'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('請選擇影片或圖片格式');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('username', username);
+            axios.post('http://127.0.0.1:8000/upload_video/', formData, {
+                timeout: 10000,
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            .then(response => {
+                console.log(response.data);
+                alert(response.data.message || response.data.error);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('上傳影片發生錯誤');
+            });
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        const username = urlParams.get('username');
+
+        // 找到要顯示 username 的元素
+        const usernameDisplayElement = document.getElementById('usernameDisplay');
+
+        // 更新元素的內容以顯示 username
+        if (username) {
+            usernameDisplayElement.textContent = '使用者: ' + username;
+        } else {
+            usernameDisplayElement.textContent = 'Username 未提供';
+        }
+        // 获取视频元素
+            const videoElement2 = document.getElementById('videoElement2');
+
+            // 创建WebSocket连接
+            const ws = new WebSocket('ws://localhost:8000/ws/video-stream/');
+
+        // 处理接收到的消息
+        ws.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            const frameData = data.frame; // 接收到的视频帧数据
+            const blob = base64ToBlob(frameData, 'image/jpeg');
+            const url = URL.createObjectURL(blob);
+            videoElement2.src = url;
+        };
+
+        // 处理连接打开事件
+        ws.onopen = function() {
+            console.log('WebSocket connection established.');
+        };
+
+        // 处理连接关闭事件
+        ws.onclose = function() {
+            console.log('WebSocket connection closed.');
+        };
+
+        // 处理连接错误事件
+        ws.onerror = function(error) {
+            console.log('WebSocket error: ' + error);
+        };
+
+        // 将 base64 编码的字符串转换为 Blob 对象
+        function base64ToBlob(base64Data, contentType) {
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            return new Blob([byteArray], { type: contentType });
+        }
+        function Recognize() {
+            const videoElement = document.getElementById('uploaded-video');
+            const videoBlob = fetch(videoElement.src).then(response => response.blob());
+        
+            videoBlob.then(blob => {
+                const formData = new FormData();
+                //formData.append('video', blob);
+                formData.append('username', username);
+        
+                axios.post('http://127.0.0.1:8000/start_recognition/', formData, {
+                    //timeout: 10000,
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                })
+                .then(response => {
+                    const result = response.data;
+                    if (result) {
+                        // 更新建议内容
+                        console.log(result)
+                        const descriptionContainer = document.getElementById('description-container');
+                        const resultElement = document.createElement('p');
+                        resultElement.textContent = '辨識結果：' + JSON.stringify(result);
+                        descriptionContainer.appendChild(resultElement);
+                    } else {
+                        alert('沒有最新上傳的影片或是無法辨識');
+                            }
+                            })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('辨識影片時發生錯誤');
+                });
+            });
+
+            
+            }
+    </script>
+</body>
+</html>
