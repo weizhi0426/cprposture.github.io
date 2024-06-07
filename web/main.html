@@ -38,13 +38,6 @@
                 box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); /* 陰影效果 */
             }
        
-            #progress-bar {
-                width: 0;
-                height: 20px;
-                background-color: #4CAF50;
-                margin-top: 10px;
-                border-radius: 4px;
-            }
     
             #uploaded-video {
                 width: 100%;
@@ -95,22 +88,14 @@
         </style>
     </head>
 <body>
-    
-
-    <div id="top">
-        <button type="button" onclick="viewHistory()">查看歷史紀錄</button>
-        
-    </div>
-    
-    <video id="videoElement2" controls autoplay></video>
-    
     <div id="upload-container">
         <div id="video-container">
             <h2>影片</h2> 
             <div id="lefttop">
                 <ul id="usernameDisplay"></ul>
             </div>
-            <video controls id="uploaded-video"></video>
+            <video controls id="uploaded-video" ></video>
+            <!-- <video id="webcam-video" width="640" height="480" autoplay></video> -->
         </div>
 
         <div id="description-container">
@@ -118,27 +103,35 @@
             <p>建議</p>
         </div>
     </div>
+    <!-- <button id="open-camera-btn">使用摄像头</button> -->
+    <!-- <button id="close-camera-btn">关闭摄像头</button> -->
+    <button id="openwebcam">開啟鏡頭</button>
+    <button id="toggleButton">開始錄製</button>
+    <video id="videoElement" autoplay muted style="display:none;"></video>
+    <!-- <script src="webcam.js"></script> -->
     <!-- <canvas id="videoCanvas" width="640" height="480"></canvas> -->
     <div id="upload-form">
         <form id="video-upload-form">
-            <select name="rating" id="rating">
-                <option value="1">辨識項目</option>
-                <option value="2">心肺復甦術</option>
-                <option value="3">復甦姿勢</option>
-                <option value="4">哈姆立克法</option>
-            </select>
             <input type="file" accept="video/*,image/*" name="video" id="fileInput">
             <button type='button' onclick="uploadVideo()">上傳影片</button>
             <button type="button" onclick="Recognize()">開始辨識</button>
             <button type="button" onclick="refreshPreview()">刷新</button>
+            <button type="button" onclick="viewHistory()">查看歷史紀錄</button>
+            <button type="button" onclick="logout()">登出</button>
         </form>
-        <div id="progress-bar"></div>
-    </div>
-    
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
-        let uploadedVideoURL = null;
+        
+        function logout() {
+            // 执行登出操作，例如清除本地存储的用户信息
+            // 重定向到登录页面
+            sessionStorage.clear();
+            location.assign('index.html'); // 假设登录页面文件名为 login.html
+          }
 
+        
+          
         document.getElementById('fileInput').addEventListener('change', (event) => {
             // 選擇完檔案後顯示預覽
             previewVideo(event.target.files[0]);
@@ -196,93 +189,168 @@
             });
         }
         const urlParams = new URLSearchParams(window.location.search);
-        const username = urlParams.get('username');
 
         // 找到要顯示 username 的元素
         const usernameDisplayElement = document.getElementById('usernameDisplay');
-
+        const username = sessionStorage.getItem('username');
         // 更新元素的內容以顯示 username
-        if (username) {
-            usernameDisplayElement.textContent = '使用者: ' + username;
+        if (!username) {
+            location.assign('index.html');
         } else {
-            usernameDisplayElement.textContent = 'Username 未提供';
+            usernameDisplayElement.textContent = '使用者: ' + username;
         }
-        // 获取视频元素
-            const videoElement2 = document.getElementById('videoElement2');
+        let isRecognizing = false;
 
-            // 创建WebSocket连接
-            const ws = new WebSocket('ws://localhost:8000/ws/video-stream/');
-
-        // 处理接收到的消息
-        ws.onmessage = function(event) {
-            const data = JSON.parse(event.data);
-            const frameData = data.frame; // 接收到的视频帧数据
-            const blob = base64ToBlob(frameData, 'image/jpeg');
-            const url = URL.createObjectURL(blob);
-            videoElement2.src = url;
-        };
-
-        // 处理连接打开事件
-        ws.onopen = function() {
-            console.log('WebSocket connection established.');
-        };
-
-        // 处理连接关闭事件
-        ws.onclose = function() {
-            console.log('WebSocket connection closed.');
-        };
-
-        // 处理连接错误事件
-        ws.onerror = function(error) {
-            console.log('WebSocket error: ' + error);
-        };
-
-        // 将 base64 编码的字符串转换为 Blob 对象
-        function base64ToBlob(base64Data, contentType) {
-            const byteCharacters = atob(base64Data);
-            const byteNumbers = new Array(byteCharacters.length);
-            for (let i = 0; i < byteCharacters.length; i++) {
-                byteNumbers[i] = byteCharacters.charCodeAt(i);
+        /*function toggleRecognition() {
+            if (!isRecognizing) {
+                startRecognition();
+                document.getElementById('toggleButton').innerText = '停止辨識';
+            } else {
+                stopRecognition();
+                document.getElementById('toggleButton').innerText = '開始辨識';
             }
-            const byteArray = new Uint8Array(byteNumbers);
-            return new Blob([byteArray], { type: contentType });
         }
-        function Recognize() {
-            const videoElement = document.getElementById('uploaded-video');
-            const videoBlob = fetch(videoElement.src).then(response => response.blob());
-        
-            videoBlob.then(blob => {
-                const formData = new FormData();
-                //formData.append('video', blob);
-                formData.append('username', username);
-        
-                axios.post('http://127.0.0.1:8000/start_recognition/', formData, {
-                    //timeout: 10000,
-                    headers: {
-                        'Content-Type': 'multipart/form-data'
-                    }
-                })
-                .then(response => {
-                    const result = response.data;
-                    if (result) {
-                        // 更新建议内容
-                        console.log(result)
-                        const descriptionContainer = document.getElementById('description-container');
-                        const resultElement = document.createElement('p');
-                        resultElement.textContent = '辨識結果：' + JSON.stringify(result);
-                        descriptionContainer.appendChild(resultElement);
-                    } else {
-                        alert('沒有最新上傳的影片或是無法辨識');
-                            }
-                            })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('辨識影片時發生錯誤');
-                });
-            });
+        function startRecognition() {
+            // 启动辨識的代码
+            isRecognizing = true;
+        }
+        function stopRecognition() {
+            document.dispatchEvent(new KeyboardEvent('keydown', {'key': 'q'}));
+            isRecognizing = false;
+        }*/
 
+        
+            
+        function Recognize() {
+        const videoElement = document.getElementById('uploaded-video');
+
+        
+        if (!videoElement.src || videoElement.src === window.location.href) {
+            alert('請選擇一個檔案.');
+            return;
+        }    
+        const formData = new FormData();
+
+        formData.append('username', username);
+
+        axios.post('http://127.0.0.1:8000/start_recognitionvideo/', formData, {
+            //timeout: 10000,
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+        .then(response => {
+            const result = response.data;
+            if (result) {
+                // 更新建议内容
+                console.log(result)
+                const descriptionContainer = document.getElementById('description-container');
+                const resultElement = document.createElement('p');
+                resultElement.innerHTML = `辨識結果：<br>左手按壓：${result.left_print}<br>右手按壓：${result.right_print}<br>按壓次數：${result.count_print}`;
+                descriptionContainer.appendChild(resultElement);
+            } else {
+                alert('沒有最新上傳的影片或是無法辨識');
+                    }
+                    })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('辨識影片時發生錯誤');
+        });
+        function sendImageDataToBackend(imageData) {
+            // 发送图像数据到后端的代码，使用 Axios 发送 POST 请求
+            axios.post('http://127.0.0.1:8000/start_recognition/', { imageData: imageData })
+                .then(response => {
+                    // 处理后端返回的识别结果
+                    console.log('Recognition result:', response.data);
+                    alert('Recognition result: ' + JSON.stringify(response.data));
+                })
+                .catch(error => {
+                    console.error('Error sending image data to backend:', error);
+                    alert('Error sending image data to backend.');
+                });
+        }
             
             }
+            const openwebcam = document.getElementById('openwebcam');
+            let isCameraOn = false;
+            const videoElement = document.getElementById('videoElement');
+
+            openwebcam.addEventListener('click', async () => {
+            if (!isCameraOn) {
+                try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = stream;
+                videoElement.play();
+                openwebcam.textContent = '關閉鏡頭';
+                isCameraOn = true;
+                videoElement.style.display = 'block'; // 顯示影片元素
+                } catch (error) {
+                console.error('無法啟動攝像頭:', error);
+                }
+            } else {
+                const stream = videoElement.srcObject;
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                videoElement.srcObject = null;
+                openwebcam.textContent = '開啟鏡頭';
+                isCameraOn = false;
+                videoElement.style.display = 'none'; // 隱藏影片元素
+            }
+            });
+            const toggleButton = document.getElementById('toggleButton');
+            let isRecording = false;
+            let stream;
+            let recorder; // 將 recorder 提升到外部範圍
+
+            toggleButton.addEventListener('click', async () => {
+            if (!isRecording) {
+                try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                videoElement.srcObject = stream;
+                videoElement.play();
+                toggleButton.textContent = '停止錄製';
+                isRecording = true;
+                startRecording(stream); // 開始錄製
+                } catch (error) {
+                console.error('無法啟動攝像頭:', error);
+                }
+            } else {
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                toggleButton.textContent = '開始錄製';
+                isRecording = false;
+                stopRecording(); // 停止錄製
+            }
+            });
+
+            function startRecording(stream) {
+            const chunks = [];
+            recorder = new MediaRecorder(stream);
+
+            recorder.ondataavailable = (e) => {
+                chunks.push(e.data);
+            };
+
+            recorder.onstop = async () => {
+                const formData = new FormData();
+                const blob = new Blob(chunks, { type: 'video/webm' });
+                formData.append('video', blob);
+                formData.append('username',username);
+                try {
+                await axios.post('http://127.0.0.1:8000/save_video/', formData);
+                console.log('影像已成功上傳至後端');
+                } catch (error) {
+                console.error('上傳影像時出錯:', error);
+                }
+            };
+
+            recorder.start();
+            }
+
+            function stopRecording() {
+            recorder.stop();
+            }
+            
     </script>
 </body>
 </html>
