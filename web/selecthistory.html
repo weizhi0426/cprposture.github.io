@@ -28,7 +28,10 @@
         button:hover {
             background-color: #b63131;
         }
-
+        .content-box {
+            margin-bottom: 20px; /* 調整這個值來設定間距 */
+            margin-left: 20px;
+        }
         #upload-container {
             display: flex;
             background-color: #fff; /* 容器背景色 */
@@ -62,6 +65,7 @@
 <body>
     <div>
         <button type="button" onclick="backToMain()">繼續辨識</button>
+        <button type="button" onclick="logout()">登出</button>
     </div>
     <div id="upload-container">
         <div id="lefttop">
@@ -81,22 +85,27 @@
     </div>
 
     <script>
-
+        function logout() {
+            // 执行登出操作，例如清除本地存储的用户信息
+            // 重定向到登录页面
+            sessionStorage.clear();
+            location.assign('index.html'); // 假设登录页面文件名为 login.html
+          }
         function backToMain() {
             // 歷史紀錄頁面的URL
             // 進行跳轉
             location.assign("main.html?username=" + encodeURIComponent(username));
         }
         const urlParams = new URLSearchParams(window.location.search);
-        const username = urlParams.get('username');
+        const username = sessionStorage.getItem('username');
         // 找到要顯示 username 的元素
         const usernameDisplayElement = document.getElementById('usernameDisplay');
 
         // 更新元素的內容以顯示 username
-        if (username) {
-            usernameDisplayElement.textContent = '使用者: ' + username;
+        if (!username) {
+            location.assign('index.html');
         } else {
-            usernameDisplayElement.textContent = 'Username 未提供';
+            usernameDisplayElement.textContent = '使用者: ' + username;
         }
         document.addEventListener('DOMContentLoaded', function() {
         var url = 'http://127.0.0.1:8000/get_recent_upload_times/';
@@ -133,17 +142,22 @@
                         console.log(response.data.uploadedFileUrl,response.data.suggestionContent)
                         let videoUrl = response.data.uploadedFileUrl
                         
-                        var videoHtml = `<h2>Uploaded File:</h2>
+                        var videoHtml = `<div class="content-box">
+                                        <h2>Uploaded File:</h2>
                                          <video width="320" height="240" controls>
                                              <source src="${videoUrl}" type="video/mp4">
                                              Your browser does not support the video tag.
-                                         </video>`;
-                        var suggestionHtml = `<h2>Suggestion:</h2>
-                                              <pre>${response.data.suggestionContent}</pre>`;
+                                         </video>
+                                        </div>`;
+                        var suggestionHtml = `<div class="content-box">
+                                            <h2>Suggestion:</h2>
+                                              <pre>${response.data.suggestionContent}</pre>
+                                            </div>`;
                         historyContent.innerHTML = videoHtml + suggestionHtml;
                     }
                 })
                 .catch(function(error) {
+                    alert("查無資料");
                     console.error('Error fetching history:', error);
                 });
         }

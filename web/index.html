@@ -71,6 +71,11 @@
     </div>
   
     <script>
+      window.addEventListener('pageshow', function(e) {
+        if (e.persisted) {
+            location.reload();
+        }
+    })
       function isValidEmail(email) {// 使用正規表達式檢查電子郵件格式
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
@@ -78,7 +83,7 @@
       
       const validateLoginForm = async (formType, event) => {
         event.preventDefault(); // 取消表單的預設提交行為
-    
+        
         var username, password, confirmPassword;
     
         if (formType === 'login') {
@@ -99,7 +104,8 @@
           if(response.data.message=='1')
             {const username = response.data.username;
               console.log('登錄成功，用戶名為：', username);
-              location.assign("main.html?username=" + encodeURIComponent(username));}
+              sessionStorage.setItem('username', username);
+              location.assign("main.html");}
           else if(response.data.message=='2')
             { alert('帳號密碼錯誤')}
           else if (response.data.message === '3')
@@ -138,7 +144,11 @@
             else if(response.data.message=='2')
               { alert('帳號重複')}
             else if(response.data.message=='0')
-            { alert('信箱重複')}})
+            { alert('信箱重複')}
+            else{
+              console.log('帳號密碼錯誤')
+              alert('註冊失敗使用者名稱或信箱重複');
+            }})
           .catch( (error) => console.log(error.response.data.message))
           
         } else if (formType === 'forgot_password') {
@@ -160,11 +170,24 @@
         }
     
         // 如果是註冊表單，檢查密碼是否一致
-        if (formType === 'signup' && password !== confirmPassword) {
-          alert("密碼不一致");
-          return false;
+        function validateLoginForm(formType, event) {
+          const password = document.getElementById('password2').value;
+          const confirmPassword = document.getElementById('confirmPassword').value;
+      
+          if (password.length < 8) {
+            alert('密碼必須包含至少8個字符。');
+            event.preventDefault();
+            return false;
+          }
+      
+          if (password !== confirmPassword) {
+            alert('密碼和確認密碼不一致。');
+            event.preventDefault();
+            return false;
+          }
+      
+          return true;
         }
-
         if (formType === 'signup' && !isValidEmail(email)) {
           alert('請輸入有效的電子郵件地址');
         return false;
