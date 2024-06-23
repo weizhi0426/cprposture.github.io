@@ -1,0 +1,30 @@
+<html>
+<!-- 載入 django 中的靜態檔案 -->
+{% load static %}
+<head>
+  <!-- 定義文件的字元編碼和視窗大小 -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- 設定頁面的標題 -->
+  <title>{% block title %}Django Auth Tutorial{% endblock %}</title>
+  <!-- 將 CSS 檔案加載到頁面中 -->
+  <link rel="stylesheet" href="index.css"></head>
+</head>
+
+<body>
+  <main>
+    <!-- 在此處加載區塊內容 -->
+    {% block content %}
+    <div id="content">
+      <div id="main-content" class="wrap doc-content">
+        <div class="letter">
+        </div>
+        <div class="envelope"></div>
+      </div>
+    </div>
+    {% endblock %}
+  </main>
+</body>
+
+</html>

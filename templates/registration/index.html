@@ -1,0 +1,287 @@
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BasicLifeSupportPose</title>
+    
+    <link href="C:\Users\User\django\web\style.css" rel="stylesheet" type="text/css" media="all">
+  </head>
+  <body>
+    <div class="system_name">
+      <h2>BLS姿勢辨識</h2>
+    </div>
+  
+    <div class="login_page">
+      <div id="container1">
+        <div class="login">  
+          <h3>登入</h3>
+          <form method="POST" onsubmit="return validateLoginForm('login', event);">
+            <input type="text" id="username" name="username" placeholder="帳號" required>
+            <div class="tab"></div>
+            <input type="password" id="password" name="password" placeholder="密碼" required>
+            <div class="tab"></div>
+            <input type="submit" value="登入" class="submit">
+          </form>
+          <h5 onclick="show_hide('signup')" style="cursor: pointer;">註冊帳號</h5>
+          <h5 onclick="showForgotPasswordForm()" style="cursor: pointer;">忘記密碼</h5>
+        </div><!-- login end-->
+      </div><!-- container1 end-->
+    </div><!-- login_page end-->
+  
+    <div class="signup_page">
+      <div id="container2">
+        <div class="signup">  
+          <h3>註冊</h3>
+          <form method="POST" onsubmit="return validateLoginForm('signup', event);">
+            <input type="text" id="email" name="email" placeholder="電子信箱" required>
+            <div class="tab"></div>
+            <input type="text" id="username2" name="username" placeholder="帳號" required>
+            <div class="tab"></div>
+            <input type="password" id="password2" name="password" placeholder="密碼" required>
+            <div class="tab"></div>
+            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="確認密碼" required>
+            <div class="tab"></div>
+            <input type="submit" value="註冊" class="submit">
+          </form>
+          <h5 onclick="show_hide('login')" style="cursor: pointer;">登入帳號</h5>
+          <h5 onclick="showForgotPasswordForm()" style="cursor: pointer;">忘記密碼</h5>
+        </div><!-- signup end-->
+      </div><!-- container2 end-->
+    </div><!-- signup_page end--> 
+
+    <div class="forgot_password_page">
+      <div id="container3">
+        <div class="forgot_password">
+          <h3>忘記密碼</h3>
+          <form method="POST" onsubmit="return validateForgotPasswordForm('forgot_password',event);">
+            <input type="text" id="email2" name="email" placeholder="電子信箱" required>
+            <div class="tab"></div>
+            <input type="submit" value="發送驗證碼" class="submit">
+          </form>
+          <h5 onclick="show_hide('login')" style="cursor: pointer;">登入帳號</h5>
+          <h5 onclick="show_hide('signup')" style="cursor: pointer;">註冊帳號</h5>
+        </div>
+      </div>
+    </div>
+  
+    <div id="copyright">
+      <h4>Copyright © 2023 All rights reserved</h4> 
+    </div>
+  
+    <script>
+      function isValidEmail(email) {// 使用正規表達式檢查電子郵件格式
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+      }
+      
+      const validateLoginForm = async (formType, event) => {
+        event.preventDefault(); // 取消表單的預設提交行為
+    
+        var username, password, confirmPassword;
+    
+        if (formType === 'login') {
+          username = document.getElementById("username").value;
+          password = document.getElementById("password").value;
+          console.log("Login Form Data:");
+          console.log("Username:", username);
+          console.log("Password:", password);
+          data={
+            "username":username,
+            "password":password
+        }
+        axios({
+          method: 'POST',
+          url: 'http://127.0.0.1:8000/accountapi/login',
+          data:JSON.stringify(data)
+        }).then( (response) =>{console.log(response.data.message)
+          if(response.data.message=='1')
+          {location.assign("./main.html");}
+          else if(response.data.message=='2')
+            { alert('帳號密碼錯誤')}}
+        )
+        .catch( (error) => console.log(error.response.data.message))
+          
+        } else if (formType === 'signup') { 
+          email = document.getElementById("email").value;
+          username = document.getElementById("username2").value;
+          password = document.getElementById("password2").value;
+          confirmPassword = document.getElementById("confirmPassword").value;
+          console.log("Sign Up Form Data:");
+          console.log("Name:", email);
+          console.log("Username:", username);
+          console.log("Password:", password);
+          console.log("Confirm Password:", confirmPassword);
+          data={
+              "email":email,
+              "username":username,
+              "password":password
+          }
+          axios({
+            method: 'POST',
+            url: 'http://127.0.0.1:8000/accountapi/signup',
+            data:JSON.stringify(data)
+          })
+          .then( (response) => {console.log(response.data.message)
+            if(response.data.message=='1')
+              {alert('註冊成功')}
+            else if(response.data.message=='2')
+              { alert('帳號重複')}
+            else if(response.data.message=='0')
+            { alert('信箱重複')}})
+          .catch( (error) => console.log(error.response.data.message))
+          
+        } else if (formType === 'forgot_password') {
+          email = document.getElementById("email2").value;
+          username = document.getElementById("username3").value;
+          password = document.getElementById("password3").value;
+          confirmPassword = document.getElementById("confirmPassword2").value;
+          console.log("Forgot Password Form Data:");
+          console.log("Name:", email);
+          console.log("Username:", username);
+          console.log("Password:", password);
+          console.log("Confirm Password:", confirmPassword);
+        }
+    
+        // 檢查帳號和密碼是否都有輸入
+        if (username.trim() === "" || password.trim() === "") {
+          alert("請輸入帳號和密碼");
+          return false; // 阻止表單提交
+        }
+    
+        // 如果是註冊表單，檢查密碼是否一致
+        if (formType === 'signup' && password !== confirmPassword) {
+          alert("密碼不一致");
+          return false;
+        }
+
+        if (formType === 'signup' && !isValidEmail(email)) {
+          alert('請輸入有效的電子郵件地址');
+        return false;
+        }
+
+        // 使用 Fetch API 來非同步處理表單提交
+        /*const formData = new FormData();
+        formData.append('email',email);
+        formData.append('username', username);
+        formData.append('password', password);
+        
+        const response = await fetch('http://127.0.0.1:8000/accountapi', {
+          method: 'POST',
+          body: formData,
+        });*/
+      
+        // 處理伺服器的回應，這裡可以根據伺服器的回應執行相應的操作
+    
+        // 如果一切正確，允許表單提交
+        return true;
+      }
+    
+      function show_hide(formType) {
+        var login = document.getElementById("container1");
+        var signup = document.getElementById("container2");
+        var forgotPassword = document.querySelector(".forgot_password");
+        var copyright = document.getElementById("copyright");
+
+        if (formType === 'login') {
+          login.style.display = "block";
+          document.getElementById("username").value = "";
+          document.getElementById("password").value = "";
+          signup.style.display = "none";
+          forgotPassword.style.display = "none";
+          copyright.style.margin = "200px 0px 0px 0px";
+        } else if (formType === 'signup') {
+          login.style.display = "none";
+          signup.style.display = "block";
+          signup.style.visibility = "visible";
+          forgotPassword.style.display = "none";
+          copyright.style.margin = "200px 0px 0px 0px";
+          
+          // 清空忘記密碼表單的輸入框
+          document.getElementById("email").value = "";
+          document.getElementById("username2").value = "";
+          document.getElementById("password2").value = "";
+          document.getElementById("confirmPassword").value = "";
+        } else if (formType === 'forgot_password') {
+          login.style.display = "none";
+          signup.style.display = "none";
+          forgotPassword.style.display = "block";
+          forgotPassword.style.visibility = "visible";
+          copyright.style.margin = "200px 0px 0px 0px";
+
+          // 清空忘記密碼表單的輸入框
+          document.getElementById("email2").value = "";
+          document.getElementById("username3").value = "";
+          document.getElementById("password3").value = "";
+          document.getElementById("confirmPassword2").value = "";
+        }
+      }
+
+      function showForgotPasswordForm() {
+        var login = document.getElementById("container1");
+        var signup = document.getElementById("container2");
+        var forgotPassword = document.querySelector(".forgot_password");
+        var copyright = document.getElementById("copyright");
+
+        login.style.display = "none";
+        signup.style.display = "none";
+        forgotPassword.style.display = "block";
+        forgotPassword.style.visibility = "visible";
+        copyright.style.margin = "200px 0px 0px 0px";
+      }
+
+      const validateForgotPasswordForm = async (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        var email = document.getElementById("email2").value;
+        var username = document.getElementById("username3").value;
+        var password = document.getElementById("password3").value;
+        var confirmPassword = document.getElementById("confirmPassword2").value;
+
+        // 檢查新密碼和確認新密碼是否相同
+        if (password !== confirmPassword) {
+          alert("新密碼和確認新密碼不一致");
+          return false;
+        }
+
+        if (formType === 'signup' && !isValidEmail(email)) {
+          alert('請輸入有效的電子郵件地址');
+        return false;
+        }
+
+        // 使用 Fetch API 或其他方式提交表單數據到伺服器
+        const formData = new FormData();
+        formData.append('email', email);
+        formData.append('username', username);
+        formData.append('password', password);
+
+        try {
+          const response = await fetch('http://127.0.0.1:8000/accountapi', {
+            method: 'POST',
+            body: formData,
+          });
+
+          // 處理伺服器的回應，這裡可以根據伺服器的回應執行相應的操作
+          if (response.ok) {
+          // 清空輸入框
+            document.getElementById("email2").value = "";
+            document.getElementById("username3").value = "";
+            document.getElementById("password3").value = "";
+            document.getElementById("confirmPassword2").value = "";
+
+            // 返回登入表單
+            show_hide('login');
+          } else {
+            alert('密碼更改失敗');
+          }
+        } catch (error) {
+          console.error('發生錯誤:', error);
+        }
+      }
+      
+
+    </script>            
+  </body>
+</html>
