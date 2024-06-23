@@ -267,9 +267,9 @@
                 return;
             }
 
-            const allowedTypes = ['image/jpg','image/jpeg', 'image/png', 'video/mp4', 'video/avi', 'video/mov', 'video/mkv'];
+            const allowedTypes = ['video/mp4'];
             if (!allowedTypes.includes(file.type)) {
-                alert('請選擇影片或圖片格式');
+                alert('請選擇影片格式');
                 return;
             }
              // 显示“上传影片中”消息
