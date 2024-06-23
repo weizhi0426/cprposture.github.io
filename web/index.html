@@ -140,7 +140,8 @@
           })
           .then( (response) => {console.log(response.data.message)
             if(response.data.message=='1')
-              {alert('註冊成功')}
+              {alert('註冊成功')
+            location.assign("index.html");}
             else if(response.data.message=='2')
               { alert('帳號重複')}
             else if(response.data.message=='0')
