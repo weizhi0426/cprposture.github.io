@@ -108,7 +108,7 @@
             usernameDisplayElement.textContent = '使用者: ' + username;
         }
         document.addEventListener('DOMContentLoaded', function() {
-        var url = 'http://127.0.0.1:8000/get_recent_upload_times/';
+        var url = 'https://ccd7-125-227-89-39.ngrok-free.app/get_recent_upload_times/';
         const formData = new FormData();
 
         formData.append('username', username);
@@ -133,7 +133,7 @@
         function viewHistory() {
             var selectedTime = document.getElementById('upload-time').value;
     
-            axios.post('http://127.0.0.1:8000/get_history/', { username: username, selectedTime: selectedTime })
+            axios.post('https://ccd7-125-227-89-39.ngrok-free.app/get_history/', { username: username, selectedTime: selectedTime })
                 .then(function(response) {
                     var historyContent = document.getElementById('history-content');
                     if (response.data.error) {
