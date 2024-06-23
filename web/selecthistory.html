@@ -77,12 +77,7 @@
                 width: 400px; /* 在較大屏幕上設置固定寬度 */
             }
         }
-        @media (max-width: 768px) {
-            video {
-                width: 100%;
-                height: auto;
-            }
-        }
+        
 
     </style>
 </head>
@@ -100,7 +95,7 @@
         <div id="description-container">
             <h2>選擇紀錄</h2>
             <form id="history-form">
-                <label for="upload-time">Select Upload Time:</label>
+                <label for="upload-time">選擇過往檔案:</label>
                 <select id="upload-time"></select>
                 <button type="button" onclick="viewHistory()">查看紀錄</button>
             </form>
@@ -167,14 +162,14 @@
                         let videoUrl = response.data.uploadedFileUrl
                         
                         var videoHtml = `<div class="content-box">
-                                        <h2>Uploaded File:</h2>
+                                        <h2>影片檔:</h2>
                                          <video width="320" height="240" controls>
                                              <source src="${videoUrl}" type="video/mp4">
                                              Your browser does not support the video tag.
                                          </video>
                                         </div>`;
                         var suggestionHtml = `<div class="content-box">
-                                            <h2>Suggestion:</h2>
+                                            <h2>建議:</h2>
                                               <pre>${response.data.suggestionContent}</pre>
                                             </div>`;
                         historyContent.innerHTML = videoHtml + suggestionHtml;
