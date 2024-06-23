@@ -25,7 +25,7 @@
             <input type="submit" value="登入" class="submit">
           </form>
           <h5 onclick="show_hide('signup')" style="cursor: pointer;">註冊帳號</h5>
-          <h5 onclick="location.assign('C:/Users/User/django/BLSdata/templates/registration/password_reset_form.html')" style="cursor: pointer;">忘記密碼</h5>
+          <h5 onclick="location.assign('http://ccd7-125-227-89-39.ngrok-free.app/accounts/password_reset')" style="cursor: pointer;">忘記密碼</h5>
         </div><!-- login end-->
       </div><!-- container1 end-->
     </div><!-- login_page end-->
@@ -46,7 +46,7 @@
             <input type="submit" value="註冊" class="submit">
           </form>
           <h5 onclick="show_hide('login')" style="cursor: pointer;">登入帳號</h5>
-          <h5 onclick="location.assign('https://ccd7-125-227-89-39.ngrok-free.app/accounts/password_reset')" style="cursor: pointer;">忘記密碼</h5>
+          <h5 onclick="location.assign('http://ccd7-125-227-89-39.ngrok-free.app/accounts/password_reset')" style="cursor: pointer;">忘記密碼</h5>
         </div><!-- signup end-->
       </div><!-- container2 end-->
     </div><!-- signup_page end--> 
@@ -83,7 +83,7 @@
       
       const validateLoginForm = async (formType, event) => {
         event.preventDefault(); // 取消表單的預設提交行為
-        
+      
         var username, password, confirmPassword;
     
         if (formType === 'login') {
@@ -123,6 +123,20 @@
           username = document.getElementById("username2").value;
           password = document.getElementById("password2").value;
           confirmPassword = document.getElementById("confirmPassword").value;
+          if (!isValidEmail(email)) {
+            alert('請輸入有效的電子郵件地址');
+            return; // 阻止继续执行注册请求
+        }
+    
+        if (password.length < 8) {
+            alert('密碼必須包含至少8個字符。');
+            return; // 阻止继续执行注册请求
+        }
+    
+        if (password !== confirmPassword) {
+            alert('密碼和確認密碼不一致。');
+            return; // 阻止继续执行注册请求
+        }
           console.log("Sign Up Form Data:");
           console.log("Name:", email);
           console.log("Username:", username);
@@ -141,7 +155,7 @@
           .then( (response) => {console.log(response.data.message)
             if(response.data.message=='1')
               {alert('註冊成功')
-            location.assign("index.html");}
+              location.assign("index.html");}
             else if(response.data.message=='2')
               { alert('帳號重複')}
             else if(response.data.message=='0')
@@ -169,9 +183,9 @@
           alert("請輸入帳號和密碼");
           return false; // 阻止表單提交
         }
-    
+      }
         // 如果是註冊表單，檢查密碼是否一致
-        function validateLoginForm(formType, event) {
+        /*function validateLoginForm(formType, event) {
           const password = document.getElementById('password2').value;
           const confirmPassword = document.getElementById('confirmPassword').value;
       
@@ -195,7 +209,7 @@
         }
 
         // 使用 Fetch API 來非同步處理表單提交
-        /*const formData = new FormData();
+        const formData = new FormData();
         formData.append('email',email);
         formData.append('username', username);
         formData.append('password', password);
@@ -203,13 +217,13 @@
         const response = await fetch('http://127.0.0.1:8000/accountapi', {
           method: 'POST',
           body: formData,
-        });*/
+        });
       
         // 處理伺服器的回應，這裡可以根據伺服器的回應執行相應的操作
     
         // 如果一切正確，允許表單提交
         return true;
-      }
+      }*/
     
       function show_hide(formType) {
         var login = document.getElementById("container1");
