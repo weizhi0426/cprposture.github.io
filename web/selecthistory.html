@@ -28,25 +28,31 @@
         button:hover {
             background-color: #b63131;
         }
+
         .content-box {
             margin-bottom: 20px; /* 調整這個值來設定間距 */
             margin-left: 20px;
         }
+
         #upload-container {
             display: flex;
+            flex-direction: column; /* 設置為垂直佈局，便於響應式設計 */
             background-color: #fff; /* 容器背景色 */
             padding: 20px;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+            gap: 20px; /* 在不同的部分之間增加空隙 */
         }
 
-        #description-container {
-            width: 400px;
+        #description-container, #history-content {
+            width: 100%; /* 調整為 100% 寬度，便於響應式設計 */
+            max-width: 400px; /* 設置最大寬度 */
             padding: 20px;
             border: 1px solid #ddd;
             border-radius: 8px;
-            margin-left: 20px;
-            position: relative; 
+            margin: 0 auto; /* 在較小屏幕上居中 */
+            position: relative;
+            text-align: center; /* 文字居中 */
         }
 
         #description-container::after {
@@ -56,10 +62,22 @@
             bottom: 50%; 
             left: 0;
             width: 100%;
-            height: 1px; /* 分隔線高度 */
+             /* 分隔線高度 */
             background-color: #706f6f; /* 分隔線顏色 */
-            content: '';
         }
+
+        /* 響應式設計 */
+        @media (min-width: 600px) {
+            #upload-container {
+                flex-direction: row; /* 在較大屏幕上設置為水平佈局 */
+            }
+
+            #description-container, #history-content {
+                margin-left: 20px; /* 在較大屏幕上設置左邊距 */
+                width: 400px; /* 在較大屏幕上設置固定寬度 */
+            }
+        }
+
     </style>
 </head>
 <body>

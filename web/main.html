@@ -10,127 +10,169 @@
                 margin: 20px;
                 background-color: #f5f5f5; /* 背景色 */
             }
-    
-            #top{
+        
+            #top {
                 text-align: right;
             }
-            #lefttop{
+        
+            #lefttop {
                 font-weight: bold;
             }
+        
             #upload-container {
                 display: flex;
+                flex-direction: column; /* 在小屏幕上改成縱向排列 */
                 background-color: #fff; /* 容器背景色 */
                 padding: 20px;
                 border-radius: 10px;
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 陰影效果 */
-                align-items: flex-start
+                align-items: flex-start;
             }
-    
+        
             #upload-form {
                 flex: 1; /* 影片框下方的寬度 */
             }
-    
+        
             #video-container {
-                width: calc(100% - 400px);
+                width: 100%; /* 設置為 100% 寬度 */
+                max-width: 100%; /* 防止過於寬 */
                 background-color: #f0f0f0; /* 影片框背景色 */
                 padding: 20px;
                 border-radius: 8px;
                 box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); /* 陰影效果 */
             }
-       
-    
+        
             #uploaded-video {
                 width: 100%;
                 margin-top: 10px;
                 border-radius: 8px;
             }
-    
+        
             #description-container {
-                width: 400px;
+                width: 100%; /* 設置為 100% 寬度 */
+                max-width: 100%; /* 防止過於寬 */
                 padding: 20px;
                 border: 1px solid #ddd;
                 border-radius: 8px;
-                margin-left: 20px;
-                position: relative; 
+                margin-top: 20px; /* 上方增加間距 */
+                position: relative;
             }
-    
+        
             #description-container::after {
                 content: "";
                 display: block;
                 position: absolute;
-                bottom: 50%; 
+                bottom: 50%;
                 left: 0;
                 width: 100%;
-                height: 1px; /* 分隔線高度 */
+                 /* 分隔線高度 */
                 background-color: #706f6f; /* 分隔線顏色 */
-                content: '';
             }
-    
-    
+        
             select, input, button {
                 margin-bottom: 10px;
                 padding: 8px;
                 border: 1px solid #ddd;
                 border-radius: 4px;
             }
-    
+        
             button {
                 background-color: #e03737;
                 color: #fff;
                 cursor: pointer;
             }
-    
+        
             button:hover {
                 background-color: #b63131;
             }
-    
+        
             #canvas {
                 position: absolute;
                 top: 0;
                 left: 0;
                 z-index: 1;
             }
+        
             #video {
                 z-index: 0;
             }
+        
             /* 模態框的樣式 */
-        .modal {
-            display: none; /* 隱藏 */
-            position: fixed; /* 固定位置 */
-            z-index: 1000; /* 顯示在最上層 */
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto; /* 滾動 */
-            background-color: rgb(0, 0, 0); /* 黑色背景 */
-            background-color: rgba(0, 0, 0, 0.4); /* 背景透明度 */
-            padding-top: 60px;
-        }
-
-        /* 模態框內容 */
-        .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 20px;
-            border: 1px solid #888;
-            width: 80%;
-        }
-
-        /* 關閉按鈕 */
-        .close {
-            color: #aaa;
-            float: right;
-            font-size: 28px;
-            font-weight: bold;
-        }
-
-        .close:hover,
-        .close:focus {
-            color: black;
-            text-decoration: none;
-            cursor: pointer;
-        }
+            .modal {
+                display: none; /* 隱藏 */
+                position: fixed; /* 固定位置 */
+                z-index: 1000; /* 顯示在最上層 */
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                overflow: auto; /* 滾動 */
+                background-color: rgb(0, 0, 0); /* 黑色背景 */
+                background-color: rgba(0, 0, 0, 0.4); /* 背景透明度 */
+                padding-top: 60px;
+            }
+        
+            /* 模態框內容 */
+            .modal-content {
+                background-color: #fefefe;
+                margin: 5% auto;
+                padding: 20px;
+                border: 1px solid #888;
+                width: 80%;
+            }
+            
+            /* 關閉按鈕 */
+            .close {
+                color: #aaa;
+                float: right;
+                font-size: 28px;
+                font-weight: bold;
+            }
+        
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+            #loadingMessage {
+                display: none; /* 初始状态下隐藏 */
+                color: red;
+                font-size: 18px;
+                margin-top: 10px;
+            }
+        
+            /* 添加媒體查詢確保不同設備上的響應式佈局 */
+            @media (min-width: 768px) {
+                #upload-container {
+                    flex-direction: row; /* 在大屏幕上改回橫向排列 */
+                }
+        
+                #video-container, #description-container {
+                    width: 100%;
+                    max-width: 50%; /* 在大屏幕上各占 50% */
+                }
+        
+                #description-container {
+                    margin-left: 20px; /* 在大屏幕上增加左右間距 */
+                    margin-top: 0; /* 取消縱向間距 */
+                }
+            }
+        
+            @media (max-width: 767px) {
+                #upload-container {
+                    flex-direction: column; /* 在小屏幕上改成縱向排列 */
+                }
+        
+                #video-container, #description-container {
+                    width: 100%;
+                }
+        
+                #description-container {
+                    margin-left: 0; /* 取消左右間距 */
+                }
+            }
+            
         </style>
     </head>
 <body>
@@ -166,7 +208,8 @@
     <div id="upload-form">
         <form id="video-upload-form">
             <input type="file" accept="video/*,image/*" name="video" id="fileInput">
-            <button type='button' onclick="uploadVideo()">上傳影片</button>
+            <button type='button'id="uploadButton" onclick="uploadVideo()">上傳影片</button>
+            <div id="loadingMessage">上傳影片中...</div>
             <button type="button" onclick="Recognize()">開始辨識</button>
             <button type="button" onclick="refreshPreview()">刷新</button>
             <button type="button" onclick="standard()">姿勢標準</button>
@@ -215,6 +258,8 @@
         function uploadVideo() {
             const input = document.getElementById('fileInput');
             const file = input.files[0];
+            const loadingMessage = document.getElementById('loadingMessage');
+            const uploadButton = document.getElementById('uploadButton');
             console.log(file)
             
             if (!file) {
@@ -227,12 +272,16 @@
                 alert('請選擇影片或圖片格式');
                 return;
             }
-
+             // 显示“上传影片中”消息
+             loadingMessage.style.display = 'block';
+             // 禁用上传按钮
+             uploadButton.disabled = true;
+             uploadButton.innerText = '上傳中...';
             const formData = new FormData();
             formData.append('file', file);
             formData.append('username', username);
             axios.post('https://ccd7-125-227-89-39.ngrok-free.app/upload_video/', formData, {
-                timeout: 10000,
+                timeout: 30000,
                 headers: {
                     'Content-Type': 'multipart/form-data'
                 }
@@ -244,6 +293,13 @@
             .catch(error => {
                 console.error('Error:', error);
                 alert('上傳影片發生錯誤');
+            })
+            .finally(() => {
+                // 隐藏“上传影片中”消息
+                loadingMessage.style.display = 'none';
+                // 重新启用上传按钮
+                uploadButton.disabled = false;
+                uploadButton.innerText = '上傳影片';
             });
         }
         const urlParams = new URLSearchParams(window.location.search);
@@ -280,24 +336,44 @@
         })
         .then(response => {
             const result = response.data;
-            if (result) {
-                // 更新建议内容
-                console.log(result)
-                const descriptionContainer = document.getElementById('description-container');
-                const resultElement = document.createElement('p');
-                resultElement.innerHTML = `辨識結果：<br>左手按壓：${result.left_print}<br>右手按壓：${result.right_print}<br>按壓次數：${result.count_print}`;
-                descriptionContainer.appendChild(resultElement);
+    
+            if (result.error) {
+                if (result.error === '影片資料夾中没有影片') {
+                    // 如果错误是 "影片資料夾中没有影片"，则显示该错误信息
+                    alert('沒有最新上傳的影片');
+                } else {
+                    // 处理其他错误
+                    alert(result.error);
+                }
             } else {
-                alert('沒有最新上傳的影片或是無法辨識');
-                    }
-                    closeModal();
-                    })
+                // 更新建议内容
+                console.log(result);
+    
+                // 从结果中提取数据，默认值为空字符串
+                const leftPrint = result.left_print ?? 'undefined';  // 使用默认值 '未定义'
+                const rightPrint = result.right_print ?? 'undefined';
+                const countPrint = result.count_print ?? 'undefined';
+    
+                // 更新页面内容
+                const descriptionContainer = document.getElementById('description-container');
+                descriptionContainer.innerHTML = ''; // 清空之前的结果
+    
+                const resultElement = document.createElement('p');
+                resultElement.innerHTML = `辨識結果：<br>左手按壓：${leftPrint}<br>右手按壓：${rightPrint}<br>按壓次數：${countPrint}`;
+                descriptionContainer.appendChild(resultElement);
+            }
+            closeModal();
+        })
         .catch(error => {
             console.error('Error:', error);
-            alert('辨識影片時發生錯誤');
+            if (error.response && error.response.data && error.response.data.error) {
+                alert(error.response.data.error);
+            } else {
+                alert('辨識影片時發生錯誤');
+            }
             closeModal();
         });
-            }
+    }
         // 顯示模態框
         function showModal() {
             const modal = document.getElementById('loadingModal');
