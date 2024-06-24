@@ -127,7 +127,7 @@
             usernameDisplayElement.textContent = '使用者: ' + username;
         }
         document.addEventListener('DOMContentLoaded', function() {
-        var url = 'https://479d-211-23-119-225.ngrok-free.app/get_recent_upload_times/';
+        var url = 'https://67ab-114-33-26-15.ngrok-free.app/get_recent_upload_times/';
         const formData = new FormData();
 
         formData.append('username', username);
@@ -152,7 +152,7 @@
         function viewHistory() {
             var selectedTime = document.getElementById('upload-time').value;
     
-            axios.post('https://479d-211-23-119-225.ngrok-free.app/get_history/', { username: username, selectedTime: selectedTime })
+            axios.post('https://67ab-114-33-26-15.ngrok-free.app/get_history/', { username: username, selectedTime: selectedTime })
                 .then(function(response) {
                     var historyContent = document.getElementById('history-content');
                     if (response.data.error) {
