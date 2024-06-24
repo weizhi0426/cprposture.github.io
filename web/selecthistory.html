@@ -127,7 +127,7 @@
             usernameDisplayElement.textContent = '使用者: ' + username;
         }
         document.addEventListener('DOMContentLoaded', function() {
-        var url = 'https://ccd7-125-227-89-39.ngrok-free.app/get_recent_upload_times/';
+        var url = 'https://479d-211-23-119-225.ngrok-free.app/get_recent_upload_times/';
         const formData = new FormData();
 
         formData.append('username', username);
@@ -152,14 +152,14 @@
         function viewHistory() {
             var selectedTime = document.getElementById('upload-time').value;
     
-            axios.post('https://ccd7-125-227-89-39.ngrok-free.app/get_history/', { username: username, selectedTime: selectedTime })
+            axios.post('https://479d-211-23-119-225.ngrok-free.app/get_history/', { username: username, selectedTime: selectedTime })
                 .then(function(response) {
                     var historyContent = document.getElementById('history-content');
                     if (response.data.error) {
                         historyContent.innerHTML = `<p>${response.data.error}</p>`;
                     } else {
                         console.log(response.data.uploadedFileUrl,response.data.suggestionContent)
-                        let videoUrl = response.data.uploadedFileUrl
+                        let videoUrl = response.data.uploadedFileUrl;
                         
                         var videoHtml = `<div class="content-box">
                                         <h2>影片檔:</h2>
