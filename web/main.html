@@ -10,7 +10,14 @@
                 margin: 20px;
                 background-color: #f5f5f5; /* 背景色 */
             }
-        
+            #canvas {
+                position: absolute;
+                bottom: 0;  /* 設置 canvas 在頁面底部 */
+                left: 0;    /* 設置 canvas 從頁面左邊開始 */
+                width: 100%; /* 設定 canvas 寬度占滿整個視窗 */
+                height: 200px;  /* 設定 canvas 高度 */
+                border: 1px solid black;
+            }
             #top {
                 text-align: right;
             }
@@ -211,6 +218,11 @@
             <button type='button'id="uploadButton" onclick="uploadVideo()">上傳影片</button>
             <div id="loadingMessage">上傳影片中...</div>
             <button type="button" onclick="Recognize()">開始辨識</button>
+            <video id="localVideo" autoplay playsinline></video>
+            <video id="remoteVideo" autoplay playsinline></video>
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+            <canvas id="canvas" width="640" height="480" style="border:1px solid black;"></canvas>
             <button type="button" onclick="refreshPreview()">刷新</button>
             <button type="button" onclick="standard()">姿勢標準</button>
             <button type="button" onclick="viewHistory()">查看歷史紀錄</button>
@@ -218,6 +230,7 @@
         </form>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
     <script>
         
         function logout() {
@@ -280,7 +293,7 @@
             const formData = new FormData();
             formData.append('file', file);
             formData.append('username', username);
-            axios.post('https://67ab-114-33-26-15.ngrok-free.app/upload_video/', formData, {
+            axios.post('https://718b-106-105-82-151.ngrok-free.app/upload_video/', formData, {
                 timeout: 30000,
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -328,7 +341,7 @@
 
         formData.append('username', username);
 
-        axios.post('https://67ab-114-33-26-15.ngrok-free.app/start_recognitionvideo/', formData, {
+        axios.post('https://718b-106-105-82-151.ngrok-free.app/start_recognitionvideo/', formData, {
             //timeout: 10000,
             headers: {
                 'Content-Type': 'multipart/form-data'
@@ -393,6 +406,106 @@
                 modal.style.display = 'none';
             }
         }
+        //
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        async function setupCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            return new Promise(resolve => video.onloadedmetadata = resolve);
+        }
+
+        async function loadModel() {
+            console.log("加載 ONNX 模型...");
+            const session = await ort.InferenceSession.create("./models/m1.onnx");
+            console.log("模型加載成功！");
+            return session;
+        }
+
+        async function runModel(session) {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+
+            const tensor = preprocess(video);
+            const results = await session.run({ images: tensor });
+
+            console.log(results);
+            
+            drawSkeleton(results);
+            requestAnimationFrame(() => runModel(session));
+        }
+
+        function preprocess(video) {
+            const tempCanvas = document.createElement("canvas");
+            tempCanvas.width = 640;
+            tempCanvas.height = 640;
+            const tempCtx = tempCanvas.getContext("2d");
+            tempCtx.drawImage(video, 0, 0, 640, 640);
+
+            const imageData = tempCtx.getImageData(0, 0, 640, 640).data;
+            const floatArray = new Float32Array(640 * 640 * 3);
+
+            for (let i = 0; i < imageData.length; i += 4) {
+                floatArray[i / 4 * 3] = imageData[i] / 255.0;
+                floatArray[i / 4 * 3 + 1] = imageData[i + 1] / 255.0;
+                floatArray[i / 4 * 3 + 2] = imageData[i + 2] / 255.0;
+            }
+
+            return new ort.Tensor("float32", floatArray, [1, 3, 640, 640]);
+        }
+
+        function drawSkeleton(results) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+            // 取得推理結果
+            const output = results.output0;  // 從 "output0" 中提取
+            if (output && output.cpuData) {
+                const keypoints = output.cpuData;  // cpuData 來自推理結果
+        
+                // 每個關鍵點應該有 3 個數值：x, y, confidence（這是我們的假設）
+                for (let i = 0; i < keypoints.length; i += 3) {
+                    const x = keypoints[i] * canvas.width;  // x 值
+                    const y = keypoints[i + 1] * canvas.height;  // y 值
+        
+                    // 繪製每個關鍵點
+                    ctx.fillStyle = "red";  // 關鍵點顏色
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, 2 * Math.PI);  // 繪製圓形來表示關鍵點
+                    ctx.fill();
+                }
+            } else {
+                console.error("No valid output data found.");
+            }
+        }
+
+        async function start() {
+            await setupCamera();
+            const session = await loadModel();
+            runModel(session);
+        }
+
+        start();
+        function testCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);  // 清除畫布
+            ctx.fillStyle = "blue";  // 設置顏色
+            ctx.beginPath();
+            ctx.arc(10, 10, 30, 0, 2 * Math.PI);  // 在 (100, 100) 位置畫一個圓
+            ctx.fill();
+        }
+        window.onload = function() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            console.log("Canvas is ready!");
+        
+            ctx.fillStyle = "blue";  
+            ctx.beginPath();
+            ctx.arc(50, 50, 30, 0, 2 * Math.PI);
+            ctx.fill();
+        };
         /*
         const openwebcam = document.getElementById('openwebcam');
         const startRecognition = document.getElementById('startRecognition');

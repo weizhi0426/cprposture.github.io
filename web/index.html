@@ -1,4 +1,5 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
 <!DOCTYPE html>
 <html>
   <head>
@@ -25,7 +26,7 @@
             <input type="submit" value="登入" class="submit">
           </form>
           <h5 onclick="show_hide('signup')" style="cursor: pointer;">註冊帳號</h5>
-          <h5 onclick="location.assign('https://67ab-114-33-26-15.ngrok-free.app/accounts/password_reset')" style="cursor: pointer;">忘記密碼</h5>
+          <h5 onclick="location.assign('https://718b-106-105-82-151.ngrok-free.app/accounts/password_reset')" style="cursor: pointer;">忘記密碼</h5>
         </div><!-- login end-->
       </div><!-- container1 end-->
     </div><!-- login_page end-->
@@ -46,7 +47,7 @@
             <input type="submit" value="註冊" class="submit">
           </form>
           <h5 onclick="show_hide('login')" style="cursor: pointer;">登入帳號</h5>
-          <h5 onclick="location.assign('https://67ab-114-33-26-15.ngrok-free.app/accounts/password_reset')" style="cursor: pointer;">忘記密碼</h5>
+          <h5 onclick="location.assign('https://718b-106-105-82-151.ngrok-free.app/accounts/password_reset')" style="cursor: pointer;">忘記密碼</h5>
         </div><!-- signup end-->
       </div><!-- container2 end-->
     </div><!-- signup_page end--> 
@@ -98,7 +99,7 @@
         }
         axios({
           method: 'POST',
-          url: 'https://67ab-114-33-26-15.ngrok-free.app/accountapi/login',
+          url: 'https://718b-106-105-82-151.ngrok-free.app/accountapi/login',
           data:JSON.stringify(data)
         }).then( (response) =>{console.log(response.data.message)
           if(response.data.message=='1')
@@ -149,7 +150,7 @@
           }
           axios({
             method: 'POST',
-            url: 'https://67ab-114-33-26-15.ngrok-free.app/accountapi/signup',
+            url: 'https://718b-106-105-82-151.ngrok-free.app/accountapi/signup',
             data:JSON.stringify(data)
           })
           .then( (response) => {console.log(response.data.message)
@@ -305,7 +306,7 @@
         formData.append('password', password);
 
         try {
-          const response = await fetch('https://67ab-114-33-26-15.ngrok-free.app/accountapi', {
+          const response = await fetch('https://c7f6-106-105-82-151.ngrok-free.app/accountapi', {
             method: 'POST',
             body: formData,
           });
