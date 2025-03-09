@@ -293,7 +293,7 @@
             const formData = new FormData();
             formData.append('file', file);
             formData.append('username', username);
-            axios.post('https://718b-106-105-82-151.ngrok-free.app/upload_video/', formData, {
+            axios.post('https://3526-2001-b011-8016-1820-2495-8e81-c71e-abd8.ngrok-free.app/upload_video/', formData, {
                 timeout: 30000,
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -341,7 +341,7 @@
 
         formData.append('username', username);
 
-        axios.post('https://718b-106-105-82-151.ngrok-free.app/start_recognitionvideo/', formData, {
+        axios.post('https://3526-2001-b011-8016-1820-2495-8e81-c71e-abd8.ngrok-free.app/start_recognitionvideo/', formData, {
             //timeout: 10000,
             headers: {
                 'Content-Type': 'multipart/form-data'
@@ -411,6 +411,8 @@
         const canvas = document.getElementById("canvas");
         const ctx = canvas.getContext("2d");
 
+        const modelUrl = "http://localhost:8001/static/models/m1.onnx";
+
         async function setupCamera() {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true });
             video.srcObject = stream;
@@ -418,23 +420,45 @@
         }
 
         async function loadModel() {
-            console.log("加載 ONNX 模型...");
-            const session = await ort.InferenceSession.create("./models/m1.onnx");
-            console.log("模型加載成功！");
-            return session;
+            try {
+                console.log("加載 ONNX 模型...");
+                const session = await ort.InferenceSession.create(modelUrl);
+                console.log("模型加載成功！");
+                return session;
+            } catch (error) {
+                console.error("❌ 模型加載失敗:", error);
+            }
         }
+        
+        async function start() {
+            await setupCamera();
+            const session = await loadModel();
+            runModel(session);
+        }
+    
+        start();
 
         async function runModel(session) {
+            if (!session) {
+                console.error("❌ ONNX 模型未正確加載");
+                return;
+            }
+        
             canvas.width = video.videoWidth;
             canvas.height = video.videoHeight;
-
+        
             const tensor = preprocess(video);
-            const results = await session.run({ images: tensor });
-
-            console.log(results);
             
-            drawSkeleton(results);
-            requestAnimationFrame(() => runModel(session));
+            try {
+                const results = await session.run({ images: tensor });
+        
+                console.log("推理結果:", results);  // 🔥 新增這行
+        
+                drawSkeleton(results);
+                requestAnimationFrame(() => runModel(session));
+            } catch (error) {
+                console.error("❌ 推理失敗:", error);
+            }
         }
 
         function preprocess(video) {
@@ -460,34 +484,54 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         
-            // 取得推理結果
-            const output = results.output0;  // 從 "output0" 中提取
-            if (output && output.cpuData) {
-                const keypoints = output.cpuData;  // cpuData 來自推理結果
+            const output = results.output0;
+            
+            if (!output || !output.cpuData) {
+                console.error("❌ 沒有找到骨架數據");
+                return;
+            }
         
-                // 每個關鍵點應該有 3 個數值：x, y, confidence（這是我們的假設）
-                for (let i = 0; i < keypoints.length; i += 3) {
-                    const x = keypoints[i] * canvas.width;  // x 值
-                    const y = keypoints[i + 1] * canvas.height;  // y 值
+            const keypointsData = output.cpuData;
+            const numDetections = output.dims[2]; // 8400 個候選框
+            const numKeypoints = 17; // YOLOv8 Pose 通常有 17 個關鍵點
         
-                    // 繪製每個關鍵點
-                    ctx.fillStyle = "red";  // 關鍵點顏色
+            let bestIndex = -1;
+            let bestConfidence = 0;
+        
+            // 找出置信度最高的偵測結果
+            for (let i = 0; i < numDetections; i++) {
+                const conf = keypointsData[i * (numKeypoints * 3 + 6) + 4]; // 第 5 個值是信心分數
+                if (conf > bestConfidence) {
+                    bestConfidence = conf;
+                    bestIndex = i;
+                }
+            }
+        
+            // 如果沒有找到高置信度的檢測結果，就不畫骨架
+            if (bestIndex === -1 || bestConfidence < 0.5) {
+                console.warn("⚠️ 沒有高置信度的骨架數據");
+                return;
+            }
+        
+            console.log("🎯 最高置信度:", bestConfidence);
+        
+            // 取得該偵測結果的關鍵點座標
+            for (let k = 0; k < numKeypoints; k++) {
+                const x = keypointsData[bestIndex * (numKeypoints * 3 + 6) + 6 + k * 3] * canvas.width;
+                const y = keypointsData[bestIndex * (numKeypoints * 3 + 6) + 6 + k * 3 + 1] * canvas.height;
+                const conf = keypointsData[bestIndex * (numKeypoints * 3 + 6) + 6 + k * 3 + 2];
+        
+                if (conf > 0.3) { // 過濾掉低置信度的點
+                    ctx.fillStyle = "red";
                     ctx.beginPath();
-                    ctx.arc(x, y, 5, 0, 2 * Math.PI);  // 繪製圓形來表示關鍵點
+                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
                     ctx.fill();
                 }
-            } else {
-                console.error("No valid output data found.");
             }
         }
+        
 
-        async function start() {
-            await setupCamera();
-            const session = await loadModel();
-            runModel(session);
-        }
-
-        start();
+        
         function testCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);  // 清除畫布
             ctx.fillStyle = "blue";  // 設置顏色

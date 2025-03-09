@@ -26,7 +26,7 @@
             <input type="submit" value="登入" class="submit">
           </form>
           <h5 onclick="show_hide('signup')" style="cursor: pointer;">註冊帳號</h5>
-          <h5 onclick="location.assign('https://718b-106-105-82-151.ngrok-free.app/accounts/password_reset')" style="cursor: pointer;">忘記密碼</h5>
+          <h5 onclick="location.assign('https://3526-2001-b011-8016-1820-2495-8e81-c71e-abd8.ngrok-free.app/accounts/password_reset')" style="cursor: pointer;">忘記密碼</h5>
         </div><!-- login end-->
       </div><!-- container1 end-->
     </div><!-- login_page end-->
@@ -47,7 +47,7 @@
             <input type="submit" value="註冊" class="submit">
           </form>
           <h5 onclick="show_hide('login')" style="cursor: pointer;">登入帳號</h5>
-          <h5 onclick="location.assign('https://718b-106-105-82-151.ngrok-free.app/accounts/password_reset')" style="cursor: pointer;">忘記密碼</h5>
+          <h5 onclick="location.assign('https://3526-2001-b011-8016-1820-2495-8e81-c71e-abd8.ngrok-free.app/accounts/password_reset')" style="cursor: pointer;">忘記密碼</h5>
         </div><!-- signup end-->
       </div><!-- container2 end-->
     </div><!-- signup_page end--> 
@@ -99,7 +99,7 @@
         }
         axios({
           method: 'POST',
-          url: 'https://718b-106-105-82-151.ngrok-free.app/accountapi/login',
+          url: 'https://3526-2001-b011-8016-1820-2495-8e81-c71e-abd8.ngrok-free.app/accountapi/login',
           data:JSON.stringify(data)
         }).then( (response) =>{console.log(response.data.message)
           if(response.data.message=='1')
@@ -150,7 +150,7 @@
           }
           axios({
             method: 'POST',
-            url: 'https://718b-106-105-82-151.ngrok-free.app/accountapi/signup',
+            url: 'https://3526-2001-b011-8016-1820-2495-8e81-c71e-abd8.ngrok-free.app/accountapi/signup',
             data:JSON.stringify(data)
           })
           .then( (response) => {console.log(response.data.message)
