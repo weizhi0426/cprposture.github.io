@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>影片上傳網站</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                margin: 20px;
+                background-color: #f5f5f5; /* 背景色 */
+            }
+            #canvas {
+                position: absolute;
+                bottom: 0;  /* 設置 canvas 在頁面底部 */
+                left: 0;    /* 設置 canvas 從頁面左邊開始 */
+                width: 100%; /* 設定 canvas 寬度占滿整個視窗 */
+                height: 200px;  /* 設定 canvas 高度 */
+                border: 1px solid black;
+            }
+            #top {
+                text-align: right;
+            }
+        
+            #lefttop {
+                font-weight: bold;
+            }
+        
+            #upload-container {
+                display: flex;
+                flex-direction: column; /* 在小屏幕上改成縱向排列 */
+                background-color: #fff; /* 容器背景色 */
+                padding: 20px;
+                border-radius: 10px;
+                box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+                align-items: flex-start;
+            }
+        
+            #upload-form {
+                flex: 1; /* 影片框下方的寬度 */
+            }
+        
+            #video-container {
+                width: 100%; /* 設置為 100% 寬度 */
+                max-width: 100%; /* 防止過於寬 */
+                background-color: #f0f0f0; /* 影片框背景色 */
+                padding: 20px;
+                border-radius: 8px;
+                box-shadow: 0 0 5px rgba(0, 0, 0, 0.1); /* 陰影效果 */
+            }
+        
+            #uploaded-video {
+                width: 100%;
+                margin-top: 10px;
+                border-radius: 8px;
+            }
+        
+            #description-container {
+                width: 100%; /* 設置為 100% 寬度 */
+                max-width: 100%; /* 防止過於寬 */
+                padding: 20px;
+                border: 1px solid #ddd;
+                border-radius: 8px;
+                margin-top: 20px; /* 上方增加間距 */
+                position: relative;
+            }
+        
+            #description-container::after {
+                content: "";
+                display: block;
+                position: absolute;
+                bottom: 50%;
+                left: 0;
+                width: 100%;
+                 /* 分隔線高度 */
+                background-color: #706f6f; /* 分隔線顏色 */
+            }
+        
+            select, input, button {
+                margin-bottom: 10px;
+                padding: 8px;
+                border: 1px solid #ddd;
+                border-radius: 4px;
+            }
+        
+            button {
+                background-color: #e03737;
+                color: #fff;
+                cursor: pointer;
+            }
+        
+            button:hover {
+                background-color: #b63131;
+            }
+        
+            #canvas {
+                position: absolute;
+                top: 0;
+                left: 0;
+                z-index: 1;
+            }
+        
+            #video {
+                z-index: 0;
+            }
+        
+            /* 模態框的樣式 */
+            .modal {
+                display: none; /* 隱藏 */
+                position: fixed; /* 固定位置 */
+                z-index: 1000; /* 顯示在最上層 */
+                left: 0;
+                top: 0;
+                width: 100%;
+                height: 100%;
+                overflow: auto; /* 滾動 */
+                background-color: rgb(0, 0, 0); /* 黑色背景 */
+                background-color: rgba(0, 0, 0, 0.4); /* 背景透明度 */
+                padding-top: 60px;
+            }
+        
+            /* 模態框內容 */
+            .modal-content {
+                background-color: #fefefe;
+                margin: 5% auto;
+                padding: 20px;
+                border: 1px solid #888;
+                width: 80%;
+            }
+            
+            /* 關閉按鈕 */
+            .close {
+                color: #aaa;
+                float: right;
+                font-size: 28px;
+                font-weight: bold;
+            }
+        
+            .close:hover,
+            .close:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+            #loadingMessage {
+                display: none; /* 初始状态下隐藏 */
+                color: red;
+                font-size: 18px;
+                margin-top: 10px;
+            }
+        
+            /* 添加媒體查詢確保不同設備上的響應式佈局 */
+            @media (min-width: 768px) {
+                #upload-container {
+                    flex-direction: row; /* 在大屏幕上改回橫向排列 */
+                }
+        
+                #video-container, #description-container {
+                    width: 100%;
+                    max-width: 50%; /* 在大屏幕上各占 50% */
+                }
+        
+                #description-container {
+                    margin-left: 20px; /* 在大屏幕上增加左右間距 */
+                    margin-top: 0; /* 取消縱向間距 */
+                }
+            }
+        
+            @media (max-width: 767px) {
+                #upload-container {
+                    flex-direction: column; /* 在小屏幕上改成縱向排列 */
+                }
+        
+                #video-container, #description-container {
+                    width: 100%;
+                }
+        
+                #description-container {
+                    margin-left: 0; /* 取消左右間距 */
+                }
+            }
+            
+        </style>
+    </head>
+<body>
+    <div id="loadingModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal()">&times;</span>
+            <p>辨識中，請稍候...</p>
+        </div>
+    </div>
+    <div id="upload-container">
+        <div id="video-container">
+            <h2>影片</h2> 
+            <div id="lefttop">
+                <ul id="usernameDisplay"></ul>
+            </div>
+            <video controls id="uploaded-video" ></video>
+            <!-- <video id="webcam-video" width="640" height="480" autoplay></video> -->
+        </div>
+
+        <div id="description-container">
+            <h2>評分</h2>
+            <p>建議</p>
+        </div>
+    </div>
+    <!-- <button id="open-camera-btn">使用摄像头</button> -->
+    <!-- <button id="close-camera-btn">关闭摄像头</button> -->
+    <!-- <button id="openwebcam">開啟鏡頭</button>
+    <button id="startRecognition">開始錄製</button> -->
+    <video id="videoElement" autoplay muted style="display:none;"></video>
+    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
+    <!-- <script src="webcam.js"></script> -->
+    <!-- <canvas id="videoCanvas" width="640" height="480"></canvas> -->
+    <div id="upload-form">
+        <form id="video-upload-form">
+            <input type="file" accept="video/*,image/*" name="video" id="fileInput">
+            <button type='button'id="uploadButton" onclick="uploadVideo()">上傳影片</button>
+            <div id="loadingMessage">上傳影片中...</div>
+            <button type="button" onclick="Recognize()">開始辨識</button>
+            <video id="localVideo" autoplay playsinline></video>
+            <video id="remoteVideo" autoplay playsinline></video>
+            <video id="video" autoplay playsinline></video>
+            <canvas id="canvas"></canvas>
+            <canvas id="canvas" width="640" height="480" style="border:1px solid black;"></canvas>
+            <button type="button" onclick="refreshPreview()">刷新</button>
+            <button type="button" onclick="standard()">姿勢標準</button>
+            <button type="button" onclick="viewHistory()">查看歷史紀錄</button>
+            <button type="button" onclick="logout()">登出</button>
+        </form>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+    <script>
+        
+        function logout() {
+            // 执行登出操作，例如清除本地存储的用户信息
+            // 重定向到登录页面
+            sessionStorage.clear();
+            location.assign('index.html'); // 假设登录页面文件名为 login.html
+          }
+
+        
+          
+        document.getElementById('fileInput').addEventListener('change', (event) => {
+            // 選擇完檔案後顯示預覽
+            previewVideo(event.target.files[0]);
+        });
+
+        function viewHistory() {
+            // 歷史紀錄頁面的URL
+            // 進行跳轉
+            window.location.href = 'selecthistory.html?username=' + encodeURIComponent(username);
+        }
+        function standard() {
+            // 歷史紀錄頁面的URL
+            // 進行跳轉
+            window.location.href = 'standard.html?username=' + encodeURIComponent(username);
+        }
+        function previewVideo(file) {
+            var uploadedVideoURL = URL.createObjectURL(file);
+            document.getElementById('uploaded-video').src = uploadedVideoURL;
+        }
+
+        function refreshPreview() {
+            // 清空影片預覽
+            document.getElementById('uploaded-video').src = '';
+            // 清空選擇的檔案
+            document.getElementById('video-input').value = '';
+        }
+        function uploadVideo() {
+            const input = document.getElementById('fileInput');
+            const file = input.files[0];
+            const loadingMessage = document.getElementById('loadingMessage');
+            const uploadButton = document.getElementById('uploadButton');
+            console.log(file)
+            
+            if (!file) {
+                alert('請選擇一個檔案.');
+                return;
+            }
+
+            const allowedTypes = ['video/mp4'];
+            if (!allowedTypes.includes(file.type)) {
+                alert('請選擇影片格式');
+                return;
+            }
+             // 显示“上传影片中”消息
+             loadingMessage.style.display = 'block';
+             // 禁用上传按钮
+             uploadButton.disabled = true;
+             uploadButton.innerText = '上傳中...';
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('username', username);
+            axios.post('https://3526-2001-b011-8016-1820-2495-8e81-c71e-abd8.ngrok-free.app/upload_video/', formData, {
+                timeout: 30000,
+                headers: {
+                    'Content-Type': 'multipart/form-data'
+                }
+            })
+            .then(response => {
+                console.log(response.data);
+                alert(response.data.message || response.data.error);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('上傳影片發生錯誤');
+            })
+            .finally(() => {
+                // 隐藏“上传影片中”消息
+                loadingMessage.style.display = 'none';
+                // 重新启用上传按钮
+                uploadButton.disabled = false;
+                uploadButton.innerText = '上傳影片';
+            });
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // 找到要顯示 username 的元素
+        const usernameDisplayElement = document.getElementById('usernameDisplay');
+        const username = sessionStorage.getItem('username');
+        // 更新元素的內容以顯示 username
+        if (!username) {
+            location.assign('index.html');
+        } else {
+            usernameDisplayElement.textContent = '使用者: ' + username;
+        }
+        let isRecognizing = false;
+            
+        function Recognize() {
+        const videoElement = document.getElementById('uploaded-video');
+
+        
+        if (!videoElement.src || videoElement.src === window.location.href) {
+            alert('請選擇一個檔案.');
+            return;
+        }    
+        showModal();
+        const formData = new FormData();
+
+        formData.append('username', username);
+
+        axios.post('https://3526-2001-b011-8016-1820-2495-8e81-c71e-abd8.ngrok-free.app/start_recognitionvideo/', formData, {
+            //timeout: 10000,
+            headers: {
+                'Content-Type': 'multipart/form-data'
+            }
+        })
+        .then(response => {
+            const result = response.data;
+    
+            if (result.error) {
+                if (result.error === '影片資料夾中没有影片') {
+                    // 如果错误是 "影片資料夾中没有影片"，则显示该错误信息
+                    alert('沒有最新上傳的影片');
+                } else {
+                    // 处理其他错误
+                    alert(result.error);
+                }
+            } else {
+                // 更新建议内容
+                console.log(result);
+    
+                // 从结果中提取数据，默认值为空字符串
+                const leftPrint = result.left_print ?? 'undefined';  // 使用默认值 '未定义'
+                const rightPrint = result.right_print ?? 'undefined';
+                const countPrint = result.count_print ?? 'undefined';
+    
+                // 更新页面内容
+                const descriptionContainer = document.getElementById('description-container');
+                descriptionContainer.innerHTML = ''; // 清空之前的结果
+    
+                const resultElement = document.createElement('p');
+                resultElement.innerHTML = `辨識結果：<br>左手按壓：${leftPrint}<br>右手按壓：${rightPrint}<br>按壓次數：${countPrint}`;
+                descriptionContainer.appendChild(resultElement);
+            }
+            closeModal();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            if (error.response && error.response.data && error.response.data.error) {
+                alert(error.response.data.error);
+            } else {
+                alert('辨識影片時發生錯誤');
+            }
+            closeModal();
+        });
+    }
+        // 顯示模態框
+        function showModal() {
+            const modal = document.getElementById('loadingModal');
+            modal.style.display = 'block';
+        }
+
+        // 隱藏模態框
+        function closeModal() {
+            const modal = document.getElementById('loadingModal');
+            modal.style.display = 'none';
+        }
+
+        // 當用戶點擊模態框的其他區域時，也可以關閉模態框
+        window.onclick = function(event) {
+            const modal = document.getElementById('loadingModal');
+            if (event.target === modal) {
+                modal.style.display = 'none';
+            }
+        }
+        //
+        const video = document.getElementById("video");
+        const canvas = document.getElementById("canvas");
+        const ctx = canvas.getContext("2d");
+
+        const modelUrl = "http://localhost:8001/static/models/m1.onnx";
+
+        async function setupCamera() {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            video.srcObject = stream;
+            return new Promise(resolve => video.onloadedmetadata = resolve);
+        }
+
+        async function loadModel() {
+            try {
+                console.log("加載 ONNX 模型...");
+                const session = await ort.InferenceSession.create(modelUrl);
+                console.log("模型加載成功！");
+                return session;
+            } catch (error) {
+                console.error("❌ 模型加載失敗:", error);
+            }
+        }
+        
+        async function start() {
+            await setupCamera();
+            const session = await loadModel();
+            runModel(session);
+        }
+    
+        start();
+
+        async function runModel(session) {
+            if (!session) {
+                console.error("❌ ONNX 模型未正確加載");
+                return;
+            }
+        
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+        
+            const tensor = preprocess(video);
+            
+            try {
+                const results = await session.run({ images: tensor });
+        
+                console.log("推理結果:", results);  // 🔥 新增這行
+        
+                drawSkeleton(results);
+                requestAnimationFrame(() => runModel(session));
+            } catch (error) {
+                console.error("❌ 推理失敗:", error);
+            }
+        }
+
+        function preprocess(video) {
+            const tempCanvas = document.createElement("canvas");
+            tempCanvas.width = 640;
+            tempCanvas.height = 640;
+            const tempCtx = tempCanvas.getContext("2d");
+            tempCtx.drawImage(video, 0, 0, 640, 640);
+
+            const imageData = tempCtx.getImageData(0, 0, 640, 640).data;
+            const floatArray = new Float32Array(640 * 640 * 3);
+
+            for (let i = 0; i < imageData.length; i += 4) {
+                floatArray[i / 4 * 3] = imageData[i] / 255.0;
+                floatArray[i / 4 * 3 + 1] = imageData[i + 1] / 255.0;
+                floatArray[i / 4 * 3 + 2] = imageData[i + 2] / 255.0;
+            }
+
+            return new ort.Tensor("float32", floatArray, [1, 3, 640, 640]);
+        }
+
+        function drawSkeleton(results) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+            const output = results.output0;
+            
+            if (!output || !output.cpuData) {
+                console.error("❌ 沒有找到骨架數據");
+                return;
+            }
+        
+            const keypointsData = output.cpuData;
+            const numDetections = output.dims[2]; // 8400 個候選框
+            const numKeypoints = 17; // YOLOv8 Pose 通常有 17 個關鍵點
+        
+            let bestIndex = -1;
+            let bestConfidence = 0;
+        
+            // 找出置信度最高的偵測結果
+            for (let i = 0; i < numDetections; i++) {
+                const conf = keypointsData[i * (numKeypoints * 3 + 6) + 4]; // 第 5 個值是信心分數
+                if (conf > bestConfidence) {
+                    bestConfidence = conf;
+                    bestIndex = i;
+                }
+            }
+        
+            // 如果沒有找到高置信度的檢測結果，就不畫骨架
+            if (bestIndex === -1 || bestConfidence < 0.5) {
+                console.warn("⚠️ 沒有高置信度的骨架數據");
+                return;
+            }
+        
+            console.log("🎯 最高置信度:", bestConfidence);
+        
+            // 取得該偵測結果的關鍵點座標
+            for (let k = 0; k < numKeypoints; k++) {
+                const x = keypointsData[bestIndex * (numKeypoints * 3 + 6) + 6 + k * 3] * canvas.width;
+                const y = keypointsData[bestIndex * (numKeypoints * 3 + 6) + 6 + k * 3 + 1] * canvas.height;
+                const conf = keypointsData[bestIndex * (numKeypoints * 3 + 6) + 6 + k * 3 + 2];
+        
+                if (conf > 0.3) { // 過濾掉低置信度的點
+                    ctx.fillStyle = "red";
+                    ctx.beginPath();
+                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
+                    ctx.fill();
+                }
+            }
+        }
+        
+
+        
+        function testCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);  // 清除畫布
+            ctx.fillStyle = "blue";  // 設置顏色
+            ctx.beginPath();
+            ctx.arc(10, 10, 30, 0, 2 * Math.PI);  // 在 (100, 100) 位置畫一個圓
+            ctx.fill();
+        }
+        window.onload = function() {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            console.log("Canvas is ready!");
+        
+            ctx.fillStyle = "blue";  
+            ctx.beginPath();
+            ctx.arc(50, 50, 30, 0, 2 * Math.PI);
+            ctx.fill();
+        };
+        /*
+        const openwebcam = document.getElementById('openwebcam');
+        const startRecognition = document.getElementById('startRecognition');
+        let isCameraOn = false;
+        let isRecognitionOn = false;
+        let intervalId;
+
+        const videoElement = document.getElementById('videoElement');
+        const canvasElement = document.getElementById('canvas');
+        const ctx = canvasElement.getContext('2d');
+
+        openwebcam.addEventListener('click', async () => {
+            if (!isCameraOn) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    videoElement.srcObject = stream;
+                    videoElement.play();
+                    openwebcam.textContent = '關閉鏡頭';
+                    startRecognition.disabled = false; // 激活开始辨识按钮
+                    isCameraOn = true;
+                    videoElement.style.display = 'block';
+                    canvasElement.style.display = 'block';
+                } catch (error) {
+                    console.error('無法啟動攝像頭:', error);
+                }
+            } else {
+                stopRecognition();
+                const stream = videoElement.srcObject;
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+                videoElement.srcObject = null;
+                openwebcam.textContent = '開啟鏡頭';
+                startRecognition.disabled = true;
+                isCameraOn = false;
+                videoElement.style.display = 'none';
+                canvasElement.style.display = 'none';
+            }
+        });
+
+        // 開始/停止辨識按鈕事件監聽器
+        startRecognition.addEventListener('click', () => {
+            if (!isRecognitionOn) {
+                startRecognition.textContent = '停止辨識';
+                isRecognitionOn = true;
+                startRecognitionProcess();
+            } else {
+                startRecognition.textContent = '開始辨識';
+                isRecognitionOn = false;
+                stopRecognition();
+            }
+        });
+
+        // 開始辨識處理函數
+        function startRecognitionProcess() {
+            intervalId = setInterval(sendFrameToServer, 1000); // 每秒傳送一次影像
+        }
+
+        // 停止辨識處理函數
+        function stopRecognition() {
+            clearInterval(intervalId); // 清除定時器
+        }
+
+        // 傳送影像至後端的函數
+        function sendFrameToServer() {
+            // 将视频帧绘制到 canvas 上
+            ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+            // 将 canvas 的内容转换为 data URI (PNG 格式)
+            const imageData = canvasElement.toDataURL('image/png');
+
+            // 创建 FormData 对象，并添加图像数据
+            const formData = new FormData();
+            formData.append('image', imageData);
+            console.log(formData)
+            // 使用 Axios 发送图像数据到后端
+            axios.post('http://127.0.0.1:8000/process_frame/', formData)
+                .then(response => {
+                    console.log('Response from server:', response.data);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        }
+        */
+    </script>
+</body>
+</html>
