@@ -196,7 +196,8 @@
                 <ul id="usernameDisplay"></ul>
             </div>
             <video controls id="uploaded-video" ></video>
-            <!-- <video id="webcam-video" width="640" height="480" autoplay></video> -->
+            <img id="outputImage" style="display: none;" />
+
         </div>
 
         <div id="description-container">
@@ -204,25 +205,16 @@
             <p>建議</p>
         </div>
     </div>
-    <!-- <button id="open-camera-btn">使用摄像头</button> -->
-    <!-- <button id="close-camera-btn">关闭摄像头</button> -->
-    <!-- <button id="openwebcam">開啟鏡頭</button>
-    <button id="startRecognition">開始錄製</button> -->
-    <video id="videoElement" autoplay muted style="display:none;"></video>
-    <canvas id="canvas" width="640" height="480" style="display:none;"></canvas>
-    <!-- <script src="webcam.js"></script> -->
-    <!-- <canvas id="videoCanvas" width="640" height="480"></canvas> -->
+    
     <div id="upload-form">
         <form id="video-upload-form">
             <input type="file" accept="video/*,image/*" name="video" id="fileInput">
             <button type='button'id="uploadButton" onclick="uploadVideo()">上傳影片</button>
             <div id="loadingMessage">上傳影片中...</div>
             <button type="button" onclick="Recognize()">開始辨識</button>
-            <video id="localVideo" autoplay playsinline></video>
-            <video id="remoteVideo" autoplay playsinline></video>
-            <video id="video" autoplay playsinline></video>
-            <canvas id="canvas"></canvas>
-            <canvas id="canvas" width="640" height="480" style="border:1px solid black;"></canvas>
+            <button id="startButton" type="button">使用攝像頭</button>
+            <video id="video" autoplay playsinline style="display: none;"></video> <!-- 隱藏攝像頭畫面 -->
+            <canvas id="canvas" style="display: none;"></canvas>  <!-- 用於繪製影像 -->
             <button type="button" onclick="refreshPreview()">刷新</button>
             <button type="button" onclick="standard()">姿勢標準</button>
             <button type="button" onclick="viewHistory()">查看歷史紀錄</button>
@@ -293,7 +285,7 @@
             const formData = new FormData();
             formData.append('file', file);
             formData.append('username', username);
-            axios.post('https://3526-2001-b011-8016-1820-2495-8e81-c71e-abd8.ngrok-free.app/upload_video/', formData, {
+            axios.post('https://10bf-106-105-82-151.ngrok-free.app/upload_video/', formData, {
                 timeout: 30000,
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -341,7 +333,7 @@
 
         formData.append('username', username);
 
-        axios.post('https://3526-2001-b011-8016-1820-2495-8e81-c71e-abd8.ngrok-free.app/start_recognitionvideo/', formData, {
+        axios.post('https://10bf-106-105-82-151.ngrok-free.app/start_recognitionvideo/', formData, {
             //timeout: 10000,
             headers: {
                 'Content-Type': 'multipart/form-data'
@@ -409,231 +401,67 @@
         //
         const video = document.getElementById("video");
         const canvas = document.getElementById("canvas");
+        const outputImage = document.getElementById("outputImage");
+        const startButton = document.getElementById("startButton");
         const ctx = canvas.getContext("2d");
 
-        const modelUrl = "http://localhost:8001/static/models/m1.onnx";
+        // 連接 WebSocket
+        const socket = new WebSocket("ws://127.0.0.1:8001/ws");
 
-        async function setupCamera() {
-            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-            video.srcObject = stream;
-            return new Promise(resolve => video.onloadedmetadata = resolve);
-        }
-
-        async function loadModel() {
-            try {
-                console.log("加載 ONNX 模型...");
-                const session = await ort.InferenceSession.create(modelUrl);
-                console.log("模型加載成功！");
-                return session;
-            } catch (error) {
-                console.error("❌ 模型加載失敗:", error);
-            }
-        }
-        
-        async function start() {
-            await setupCamera();
-            const session = await loadModel();
-            runModel(session);
-        }
-    
-        start();
-
-        async function runModel(session) {
-            if (!session) {
-                console.error("❌ ONNX 模型未正確加載");
-                return;
-            }
-        
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-        
-            const tensor = preprocess(video);
-            
-            try {
-                const results = await session.run({ images: tensor });
-        
-                console.log("推理結果:", results);  // 🔥 新增這行
-        
-                drawSkeleton(results);
-                requestAnimationFrame(() => runModel(session));
-            } catch (error) {
-                console.error("❌ 推理失敗:", error);
-            }
-        }
-
-        function preprocess(video) {
-            const tempCanvas = document.createElement("canvas");
-            tempCanvas.width = 640;
-            tempCanvas.height = 640;
-            const tempCtx = tempCanvas.getContext("2d");
-            tempCtx.drawImage(video, 0, 0, 640, 640);
-
-            const imageData = tempCtx.getImageData(0, 0, 640, 640).data;
-            const floatArray = new Float32Array(640 * 640 * 3);
-
-            for (let i = 0; i < imageData.length; i += 4) {
-                floatArray[i / 4 * 3] = imageData[i] / 255.0;
-                floatArray[i / 4 * 3 + 1] = imageData[i + 1] / 255.0;
-                floatArray[i / 4 * 3 + 2] = imageData[i + 2] / 255.0;
-            }
-
-            return new ort.Tensor("float32", floatArray, [1, 3, 640, 640]);
-        }
-
-        function drawSkeleton(results) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        
-            const output = results.output0;
-            
-            if (!output || !output.cpuData) {
-                console.error("❌ 沒有找到骨架數據");
-                return;
-            }
-        
-            const keypointsData = output.cpuData;
-            const numDetections = output.dims[2]; // 8400 個候選框
-            const numKeypoints = 17; // YOLOv8 Pose 通常有 17 個關鍵點
-        
-            let bestIndex = -1;
-            let bestConfidence = 0;
-        
-            // 找出置信度最高的偵測結果
-            for (let i = 0; i < numDetections; i++) {
-                const conf = keypointsData[i * (numKeypoints * 3 + 6) + 4]; // 第 5 個值是信心分數
-                if (conf > bestConfidence) {
-                    bestConfidence = conf;
-                    bestIndex = i;
-                }
-            }
-        
-            // 如果沒有找到高置信度的檢測結果，就不畫骨架
-            if (bestIndex === -1 || bestConfidence < 0.5) {
-                console.warn("⚠️ 沒有高置信度的骨架數據");
-                return;
-            }
-        
-            console.log("🎯 最高置信度:", bestConfidence);
-        
-            // 取得該偵測結果的關鍵點座標
-            for (let k = 0; k < numKeypoints; k++) {
-                const x = keypointsData[bestIndex * (numKeypoints * 3 + 6) + 6 + k * 3] * canvas.width;
-                const y = keypointsData[bestIndex * (numKeypoints * 3 + 6) + 6 + k * 3 + 1] * canvas.height;
-                const conf = keypointsData[bestIndex * (numKeypoints * 3 + 6) + 6 + k * 3 + 2];
-        
-                if (conf > 0.3) { // 過濾掉低置信度的點
-                    ctx.fillStyle = "red";
-                    ctx.beginPath();
-                    ctx.arc(x, y, 5, 0, 2 * Math.PI);
-                    ctx.fill();
-                }
-            }
-        }
-        
-
-        
-        function testCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);  // 清除畫布
-            ctx.fillStyle = "blue";  // 設置顏色
-            ctx.beginPath();
-            ctx.arc(10, 10, 30, 0, 2 * Math.PI);  // 在 (100, 100) 位置畫一個圓
-            ctx.fill();
-        }
-        window.onload = function() {
-            const canvas = document.getElementById('canvas');
-            const ctx = canvas.getContext('2d');
-            
-            console.log("Canvas is ready!");
-        
-            ctx.fillStyle = "blue";  
-            ctx.beginPath();
-            ctx.arc(50, 50, 30, 0, 2 * Math.PI);
-            ctx.fill();
+        socket.onopen = () => {
+            console.log("WebSocket connected");
         };
-        /*
-        const openwebcam = document.getElementById('openwebcam');
-        const startRecognition = document.getElementById('startRecognition');
-        let isCameraOn = false;
-        let isRecognitionOn = false;
-        let intervalId;
 
-        const videoElement = document.getElementById('videoElement');
-        const canvasElement = document.getElementById('canvas');
-        const ctx = canvasElement.getContext('2d');
+        socket.onerror = (error) => console.log("WebSocket Error:", error);
 
-        openwebcam.addEventListener('click', async () => {
-            if (!isCameraOn) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                    videoElement.srcObject = stream;
-                    videoElement.play();
-                    openwebcam.textContent = '關閉鏡頭';
-                    startRecognition.disabled = false; // 激活开始辨识按钮
-                    isCameraOn = true;
-                    videoElement.style.display = 'block';
-                    canvasElement.style.display = 'block';
-                } catch (error) {
-                    console.error('無法啟動攝像頭:', error);
-                }
-            } else {
-                stopRecognition();
-                const stream = videoElement.srcObject;
-                const tracks = stream.getTracks();
-                tracks.forEach(track => track.stop());
-                videoElement.srcObject = null;
-                openwebcam.textContent = '開啟鏡頭';
-                startRecognition.disabled = true;
-                isCameraOn = false;
-                videoElement.style.display = 'none';
-                canvasElement.style.display = 'none';
-            }
-        });
+        socket.onmessage = function (event) {
+            // 從後端接收經過處理的影像並顯示
+            outputImage.src = "data:image/jpeg;base64," + event.data;
+            outputImage.style.display = "block"; // 顯示回傳的影像
+            video.style.display = "none"; // 隱藏攝像頭畫面
+        };
 
-        // 開始/停止辨識按鈕事件監聽器
-        startRecognition.addEventListener('click', () => {
-            if (!isRecognitionOn) {
-                startRecognition.textContent = '停止辨識';
-                isRecognitionOn = true;
-                startRecognitionProcess();
-            } else {
-                startRecognition.textContent = '開始辨識';
-                isRecognitionOn = false;
-                stopRecognition();
-            }
-        });
-
-        // 開始辨識處理函數
-        function startRecognitionProcess() {
-            intervalId = setInterval(sendFrameToServer, 1000); // 每秒傳送一次影像
-        }
-
-        // 停止辨識處理函數
-        function stopRecognition() {
-            clearInterval(intervalId); // 清除定時器
-        }
-
-        // 傳送影像至後端的函數
-        function sendFrameToServer() {
-            // 将视频帧绘制到 canvas 上
-            ctx.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
-
-            // 将 canvas 的内容转换为 data URI (PNG 格式)
-            const imageData = canvasElement.toDataURL('image/png');
-
-            // 创建 FormData 对象，并添加图像数据
-            const formData = new FormData();
-            formData.append('image', imageData);
-            console.log(formData)
-            // 使用 Axios 发送图像数据到后端
-            axios.post('http://127.0.0.1:8000/process_frame/', formData)
-                .then(response => {
-                    console.log('Response from server:', response.data);
-                })
-                .catch(error => {
-                    console.error('Error:', error);
+        // 開啟攝影機
+        const uploadedVideo = document.getElementById("uploaded-video");
+        startButton.onclick = () => {
+            if (startButton.innerText === "使用攝像頭") {
+                // 啟動攝像頭並隱藏上傳影片
+                navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
+                    mediaStream = stream;
+                    video.srcObject = stream;
+                    outputImage.style.display = "block"; // 顯示攝像頭畫面
+                    uploadedVideo.style.display = "none"; // 隱藏上傳的影片
+                    startButton.innerText = "關閉攝像頭"; // 改變按鈕文字
+                    sendFrame(); // 開始發送影像
                 });
+            } else {
+                // 停止攝像頭並顯示上傳影片
+                if (mediaStream) {
+                    const tracks = mediaStream.getTracks();
+                    tracks.forEach(track => track.stop());
+                }
+                video.style.display = "none"; // 隱藏攝像頭畫面
+                uploadedVideo.style.display = "block"; // 顯示上傳影片
+                outputImage.style.display = "none"; // 隱藏回傳影像
+                startButton.innerText = "使用攝像頭"; // 恢復按鈕文字
+                outputImage.src = ""; // 清除回傳影像
+            }
+        };
+
+        function sendFrame() {
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // 取得影像數據並轉換為 Base64
+                const imageData = canvas.toDataURL("image/jpeg").split(",")[1];
+                socket.send(imageData);
+            }
         }
-        */
+
+        // 每秒傳送一幀影像到後端
+        setInterval(sendFrame, 66);  // 66ms -> 約每秒 15 幀
     </script>
 </body>
 </html>
