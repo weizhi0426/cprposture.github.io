@@ -203,6 +203,9 @@
         <div id="description-container">
             <h2>評分</h2>
             <p>建議</p>
+            <div id="left-result">左手: 尚未分析</div>
+            <div id="right-result">右手: 尚未分析</div>
+            <div id="count-result">次數: 尚未分析</div>
         </div>
     </div>
     
@@ -219,6 +222,7 @@
             <button type="button" onclick="standard()">姿勢標準</button>
             <button type="button" onclick="viewHistory()">查看歷史紀錄</button>
             <button type="button" onclick="logout()">登出</button>
+            <h1>FSR 壓力：<span id="pressure">--</span></h1>
         </form>
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
@@ -285,7 +289,7 @@
             const formData = new FormData();
             formData.append('file', file);
             formData.append('username', username);
-            axios.post('https://10bf-106-105-82-151.ngrok-free.app/upload_video/', formData, {
+            axios.post('https://f877-106-107-172-1.ngrok-free.app/upload_video/', formData, {
                 timeout: 30000,
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -321,63 +325,63 @@
         let isRecognizing = false;
             
         function Recognize() {
-        const videoElement = document.getElementById('uploaded-video');
+                const videoElement = document.getElementById('uploaded-video');
 
-        
-        if (!videoElement.src || videoElement.src === window.location.href) {
-            alert('請選擇一個檔案.');
-            return;
-        }    
-        showModal();
-        const formData = new FormData();
+                
+                if (!videoElement.src || videoElement.src === window.location.href) {
+                    alert('請選擇一個檔案.');
+                    return;
+                }    
+                showModal();
+                const formData = new FormData();
 
-        formData.append('username', username);
+                formData.append('username', username);
 
-        axios.post('https://10bf-106-105-82-151.ngrok-free.app/start_recognitionvideo/', formData, {
-            //timeout: 10000,
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        })
-        .then(response => {
-            const result = response.data;
-    
-            if (result.error) {
-                if (result.error === '影片資料夾中没有影片') {
-                    // 如果错误是 "影片資料夾中没有影片"，则显示该错误信息
-                    alert('沒有最新上傳的影片');
-                } else {
-                    // 处理其他错误
-                    alert(result.error);
-                }
-            } else {
-                // 更新建议内容
-                console.log(result);
-    
-                // 从结果中提取数据，默认值为空字符串
-                const leftPrint = result.left_print ?? 'undefined';  // 使用默认值 '未定义'
-                const rightPrint = result.right_print ?? 'undefined';
-                const countPrint = result.count_print ?? 'undefined';
-    
-                // 更新页面内容
-                const descriptionContainer = document.getElementById('description-container');
-                descriptionContainer.innerHTML = ''; // 清空之前的结果
-    
-                const resultElement = document.createElement('p');
-                resultElement.innerHTML = `辨識結果：<br>左手按壓：${leftPrint}<br>右手按壓：${rightPrint}<br>按壓次數：${countPrint}`;
-                descriptionContainer.appendChild(resultElement);
-            }
-            closeModal();
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            if (error.response && error.response.data && error.response.data.error) {
-                alert(error.response.data.error);
-            } else {
-                alert('辨識影片時發生錯誤');
-            }
-            closeModal();
-        });
+                axios.post('https://f877-106-107-172-1.ngrok-free.app/start_recognitionvideo/', formData, {
+                    //timeout: 10000,
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                })
+                .then(response => {
+                    const result = response.data;
+            
+                    if (result.error) {
+                        if (result.error === '影片資料夾中没有影片') {
+                            // 如果错误是 "影片資料夾中没有影片"，则显示该错误信息
+                            alert('沒有最新上傳的影片');
+                        } else {
+                            // 处理其他错误
+                            alert(result.error);
+                        }
+                    } else {
+                        // 更新建议内容
+                        console.log(result);
+            
+                        // 从结果中提取数据，默认值为空字符串
+                        const leftPrint = result.left_print ?? 'undefined';  // 使用默认值 '未定义'
+                        const rightPrint = result.right_print ?? 'undefined';
+                        const countPrint = result.count_print ?? 'undefined';
+            
+                        // 更新页面内容
+                        const descriptionContainer = document.getElementById('description-container');
+                        descriptionContainer.innerHTML = ''; // 清空之前的结果
+            
+                        const resultElement = document.createElement('p');
+                        resultElement.innerHTML = `辨識結果：<br>左手按壓：${leftPrint}<br>右手按壓：${rightPrint}<br>按壓次數：${countPrint}`;
+                        descriptionContainer.appendChild(resultElement);
+                    }
+                    closeModal();
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    if (error.response && error.response.data && error.response.data.error) {
+                        alert(error.response.data.error);
+                    } else {
+                        alert('辨識影片時發生錯誤');
+                    }
+                    closeModal();
+                });
     }
         // 顯示模態框
         function showModal() {
@@ -404,8 +408,11 @@
         const outputImage = document.getElementById("outputImage");
         const startButton = document.getElementById("startButton");
         const ctx = canvas.getContext("2d");
+        const leftResult = document.getElementById("left-result");
+        const rightResult = document.getElementById("right-result");
 
-        // 連接 WebSocket
+        let mediaStream = null;
+
         const socket = new WebSocket("ws://127.0.0.1:8001/ws");
 
         socket.onopen = () => {
@@ -415,36 +422,38 @@
         socket.onerror = (error) => console.log("WebSocket Error:", error);
 
         socket.onmessage = function (event) {
-            // 從後端接收經過處理的影像並顯示
-            outputImage.src = "data:image/jpeg;base64," + event.data;
-            outputImage.style.display = "block"; // 顯示回傳的影像
-            video.style.display = "none"; // 隱藏攝像頭畫面
+            const data = JSON.parse(event.data);
+            outputImage.src = "data:image/jpeg;base64," + data.image;
+            outputImage.style.display = "block";
+            video.style.display = "none";
+
+            const fb = data.feedback;
+            leftResult.innerText = `左手角度: ${fb.left_elbow_angle} 度\n${fb.left_comment}`;
+            rightResult.innerText = `右手角度: ${fb.right_elbow_angle} 度\n${fb.right_comment}`;
         };
 
-        // 開啟攝影機
         const uploadedVideo = document.getElementById("uploaded-video");
+
         startButton.onclick = () => {
             if (startButton.innerText === "使用攝像頭") {
-                // 啟動攝像頭並隱藏上傳影片
                 navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
                     mediaStream = stream;
                     video.srcObject = stream;
-                    outputImage.style.display = "block"; // 顯示攝像頭畫面
-                    uploadedVideo.style.display = "none"; // 隱藏上傳的影片
-                    startButton.innerText = "關閉攝像頭"; // 改變按鈕文字
-                    sendFrame(); // 開始發送影像
+                    outputImage.style.display = "block";
+                    uploadedVideo.style.display = "none";
+                    startButton.innerText = "關閉攝像頭";
+                    sendFrame();
                 });
             } else {
-                // 停止攝像頭並顯示上傳影片
                 if (mediaStream) {
                     const tracks = mediaStream.getTracks();
                     tracks.forEach(track => track.stop());
                 }
-                video.style.display = "none"; // 隱藏攝像頭畫面
-                uploadedVideo.style.display = "block"; // 顯示上傳影片
-                outputImage.style.display = "none"; // 隱藏回傳影像
-                startButton.innerText = "使用攝像頭"; // 恢復按鈕文字
-                outputImage.src = ""; // 清除回傳影像
+                video.style.display = "none";
+                uploadedVideo.style.display = "block";
+                outputImage.style.display = "none";
+                startButton.innerText = "使用攝像頭";
+                outputImage.src = "";
             }
         };
 
@@ -453,15 +462,17 @@
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-                // 取得影像數據並轉換為 Base64
                 const imageData = canvas.toDataURL("image/jpeg").split(",")[1];
                 socket.send(imageData);
             }
         }
 
-        // 每秒傳送一幀影像到後端
-        setInterval(sendFrame, 33);  // 66ms -> 約每秒 15 幀
+        setInterval(sendFrame, 66);  // 約每秒 15fps
+        /*
+        const ws = new WebSocket("ws://localhost:8765");
+        ws.onmessage = function(event) {
+            document.getElementById("pressure").innerText = event.data;
+        };*/
     </script>
 </body>
 </html>
