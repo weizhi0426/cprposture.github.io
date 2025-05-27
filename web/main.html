@@ -206,6 +206,7 @@
             <div id="left-result">左手: 尚未分析</div>
             <div id="right-result">右手: 尚未分析</div>
             <div id="count-result">次數: 尚未分析</div>
+            <div id="blow">吹氣感測: 尚未分析</div>
         </div>
     </div>
     
@@ -228,7 +229,7 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
     <script>
-        
+        const BASE_URL = 'https://04dd-106-107-172-1.ngrok-free.app';
         function logout() {
             // 执行登出操作，例如清除本地存储的用户信息
             // 重定向到登录页面
@@ -289,7 +290,7 @@
             const formData = new FormData();
             formData.append('file', file);
             formData.append('username', username);
-            axios.post('https://f877-106-107-172-1.ngrok-free.app/upload_video/', formData, {
+            axios.post(`${BASE_URL}/upload_video/`, formData, {
                 timeout: 30000,
                 headers: {
                     'Content-Type': 'multipart/form-data'
@@ -337,7 +338,7 @@
 
                 formData.append('username', username);
 
-                axios.post('https://f877-106-107-172-1.ngrok-free.app/start_recognitionvideo/', formData, {
+                axios.post(`${BASE_URL}/start_recognitionvideo/`, formData, {
                     //timeout: 10000,
                     headers: {
                         'Content-Type': 'multipart/form-data'
@@ -410,6 +411,8 @@
         const ctx = canvas.getContext("2d");
         const leftResult = document.getElementById("left-result");
         const rightResult = document.getElementById("right-result");
+        const blowResult = document.getElementById("blow");
+        const countresult = document.getElementById("count-result");
 
         let mediaStream = null;
 
@@ -430,6 +433,9 @@
             const fb = data.feedback;
             leftResult.innerText = `左手角度: ${fb.left_elbow_angle} 度\n${fb.left_comment}`;
             rightResult.innerText = `右手角度: ${fb.right_elbow_angle} 度\n${fb.right_comment}`;
+            countresult.innerText = `按壓次數: ${fb.cpr_count}`;
+            blowResult.innerText = `吹氣感測: ${fb.is_blowing}`;
+            console.log("Received data:", fb.distance,fb.pressure);
         };
 
         const uploadedVideo = document.getElementById("uploaded-video");
