@@ -90,36 +90,48 @@
         var username, password, confirmPassword;
     
         if (formType === 'login') {
-          username = document.getElementById("username").value;
-          password = document.getElementById("password").value;
+          const username = document.getElementById("username").value;
+          const password = document.getElementById("password").value;
+        
           console.log("Login Form Data:");
           console.log("Username:", username);
           console.log("Password:", password);
-          data={
-            "username":username,
-            "password":password
-        }
-        axios({
-          method: 'POST',
-          url: `${BASE_URL}/accountapi/login`,
-          data:JSON.stringify(data)
-        }).then( (response) =>{console.log(response.data.message)
-          if(response.data.message=='1')
-            {const username = response.data.username;
-              console.log('登錄成功，用戶名為：', username);
-              sessionStorage.setItem('username', username);
-              location.assign("main.html");}
-          else if(response.data.message=='2')
-            { alert('帳號密碼錯誤')}
-          else if (response.data.message === '3')
-          { alert('用户名不存在');}
-              // 处理用户名不存在的情况
-          else{
-            console.log('帳號密碼錯誤')
-            alert('帳號密碼錯誤');
-          }}
-        )
-        .catch( (error) => console.log(error.response.data.message))
+        
+          const data = {
+            username: username,
+            password: password
+          };
+        
+          axios({
+            method: 'POST',
+            url: `${BASE_URL}/accountapi/login`,
+            data: JSON.stringify(data),
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          })
+            .then((response) => {
+              const message = response.data.message;
+              console.log("伺服器回應 message:", message);
+        
+              if (message === '1') {
+                const username = response.data.username;
+                console.log('登錄成功，用戶名為：', username);
+                sessionStorage.setItem('username', username);
+                location.assign("main.html");
+              } else if (message === '2') {
+                alert('帳號密碼錯誤');
+              } else if (message === '3') {
+                alert('用户名不存在');
+              } else {
+                alert('未知錯誤');
+              }
+            })
+            .catch((error) => {
+              console.error("登入失敗:", error);
+              alert("登入失敗，請檢查伺服器是否啟動，或開啟 F12 查看錯誤細節。");
+            });
+
           
         } else if (formType === 'signup') { 
           email = document.getElementById("email").value;
