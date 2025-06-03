@@ -221,6 +221,8 @@
             <button id="startButton" type="button">使用攝像頭</button>
             <video id="video" autoplay playsinline style="display: none;"></video> <!-- 隱藏攝像頭畫面 -->
             <canvas id="canvas" style="display: none;"></canvas>  <!-- 用於繪製影像 -->
+            <button id="startBtn" type="button">開始錄影</button>
+            <button id="stopBtn" type="button">停止錄影</button>
             <button type="button" onclick="refreshPreview()">刷新</button>
             <button type="button" onclick="standard()">姿勢標準</button>
             <button type="button" onclick="viewHistory()">查看歷史紀錄</button>
@@ -414,16 +416,18 @@
         const rightResult = document.getElementById("right-result");
         const blowResult = document.getElementById("blow");
         const countresult = document.getElementById("count-result");
+        const uploadedVideo = document.getElementById("uploaded-video");
 
         let mediaStream = null;
+        let isImageShown = false;
 
-        const socket = new WebSocket("ws://127.0.0.1:8001/ws");
+        const socket = new WebSocket(`ws://127.0.0.1:8001/ws?username=${username}`);
 
         socket.onopen = () => {
-            console.log("WebSocket connected");
+            console.log("✅ WebSocket connected");
         };
 
-        socket.onerror = (error) => console.log("WebSocket Error:", error);
+        socket.onerror = (error) => console.log("❌ WebSocket Error:", error);
 
         socket.onmessage = function (event) {
             const data = JSON.parse(event.data);
@@ -433,20 +437,19 @@
 
             const fb = data.feedback;
             leftResult.innerText = `左手角度: ${fb.left_elbow_angle} 度\n${fb.left_comment}`;
-            
             rightResult.innerText = `右手角度: ${fb.right_elbow_angle} 度\n${fb.right_comment}`;
+            countresult.innerText = `按壓次數: ${fb.cpr_count}`;
+            blowResult.innerText = `吹氣感測: ${fb.is_blowing}`;
+
             if (fb.left_elbow_angle > 100 || fb.right_elbow_angle > 100) {
                 showWarningImage("straight.jpg");
             }
-            countresult.innerText = `按壓次數: ${fb.cpr_count}`;
-            blowResult.innerText = `吹氣感測: ${fb.is_blowing}`;
-            console.log("Received data:", fb.distance,fb.pressure);
+
+            console.log("📩 Feedback:", fb.distance, fb.pressure);
         };
-        let isImageShown = false; // 初始為 false
 
         function showWarningImage(src) {
-            if (isImageShown) return; // 如果已經在顯示中，就不做任何事
-
+            if (isImageShown) return;
             isImageShown = true;
             const img = document.getElementById("angle-warning-image");
             img.src = src;
@@ -454,28 +457,26 @@
 
             setTimeout(() => {
                 img.style.display = "none";
-                isImageShown = false; // 5 秒後允許再次顯示
+                isImageShown = false;
             }, 5000);
         }
-        const uploadedVideo = document.getElementById("uploaded-video");
 
         startButton.onclick = () => {
             if (startButton.innerText === "使用攝像頭") {
                 navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
                     mediaStream = stream;
                     video.srcObject = stream;
-                    video.style.display = "block"; // 顯示攝影機
+                    video.style.display = "block";
                     outputImage.style.display = "none";
                     uploadedVideo.style.display = "none";
                     startButton.innerText = "關閉攝像頭";
-                    sendFrame(); // 傳送分析
+                    sendFrame();
                 });
             } else {
                 if (mediaStream) {
-                    const tracks = mediaStream.getTracks();
-                    tracks.forEach(track => track.stop());
+                    mediaStream.getTracks().forEach(track => track.stop());
                     mediaStream = null;
-                    video.srcObject = null; // 重點：清除影片來源
+                    video.srcObject = null;
                 }
                 video.style.display = "none";
                 uploadedVideo.style.display = "block";
@@ -495,12 +496,25 @@
             }
         }
 
-        setInterval(sendFrame, 66);  // 約每秒 15fps
-        /*
-        const ws = new WebSocket("ws://localhost:8765");
-        ws.onmessage = function(event) {
-            document.getElementById("pressure").innerText = event.data;
-        };*/
+        // 傳送畫面給後端 (每秒約 15 次)
+        setInterval(sendFrame, 66);
+
+        // 🎬 控制錄影
+        document.getElementById("startBtn").addEventListener("click", function (event) {
+      event.preventDefault(); // 🚨 阻止頁面重整
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send("__start_recording__");
+        console.log("開始錄影");
+      }
+    });
+
+    document.getElementById("stopBtn").addEventListener("click", function (event) {
+      event.preventDefault(); // 🚨 阻止頁面重整
+      if (socket.readyState === WebSocket.OPEN) {
+        socket.send("__stop_recording__");
+        console.log("停止錄影");
+      }
+    });
     </script>
 </body>
 </html>
