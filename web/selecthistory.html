@@ -1,84 +1,71 @@
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>歷史紀錄</title>
     <style>
         body {
             font-family: Arial, sans-serif;
             margin: 20px;
-            background-color: #f5f5f5; /* 背景色 */
+            background-color: #f5f5f5;
         }
-
         select, input, button {
             margin-bottom: 10px;
             padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
         }
-
         button {
             background-color: #e03737;
             color: #fff;
             cursor: pointer;
         }
-
         button:hover {
             background-color: #b63131;
         }
-
         .content-box {
-            margin-bottom: 20px; /* 調整這個值來設定間距 */
+            margin-bottom: 20px;
             margin-left: 20px;
         }
-
         #upload-container {
             display: flex;
-            flex-direction: column; /* 設置為垂直佈局，便於響應式設計 */
-            background-color: #fff; /* 容器背景色 */
+            flex-direction: column;
+            background-color: #fff;
             padding: 20px;
             border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 陰影效果 */
-            gap: 20px; /* 在不同的部分之間增加空隙 */
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            gap: 20px;
         }
-
         #description-container, #history-content {
-            width: 100%; /* 調整為 100% 寬度，便於響應式設計 */
-            max-width: 400px; /* 設置最大寬度 */
+            width: 100%;
+            max-width: 400px;
             padding: 20px;
             border: 1px solid #ddd;
             border-radius: 8px;
-            margin: 0 auto; /* 在較小屏幕上居中 */
+            margin: 0 auto;
             position: relative;
-            text-align: center; /* 文字居中 */
+            text-align: center;
         }
-
         #description-container::after {
             content: "";
             display: block;
             position: absolute;
-            bottom: 50%; 
+            bottom: 50%;
             left: 0;
             width: 100%;
-             /* 分隔線高度 */
-            background-color: #706f6f; /* 分隔線顏色 */
+            background-color: #706f6f;
         }
-
-        /* 響應式設計 */
         @media (min-width: 600px) {
             #upload-container {
-                flex-direction: row; /* 在較大屏幕上設置為水平佈局 */
+                flex-direction: row;
             }
-
             #description-container, #history-content {
-                margin-left: 20px; /* 在較大屏幕上設置左邊距 */
-                width: 400px; /* 在較大屏幕上設置固定寬度 */
+                margin-left: 20px;
+                width: 400px;
             }
         }
-        
-
     </style>
 </head>
 <body>
@@ -88,101 +75,114 @@
     </div>
     <div id="upload-container">
         <div id="lefttop">
-            <ul id="usernameDisplay"></ul>
-        </div><div id="lefttop">
-                <ul id="usernameDisplay"></ul>
-            </div>
+            <div id="usernameDisplay"></div>
+        </div>
         <div id="description-container">
             <h2>選擇紀錄</h2>
             <form id="history-form">
                 <label for="upload-time">選擇過往檔案:</label>
                 <select id="upload-time"></select>
                 <button type="button" onclick="viewHistory()">查看紀錄</button>
-                /*<source src="https://96e2-106-107-172-1.ngrok-free.app/media/weizhi5/output_20250602015141.mp4" type="video/mp4">*/
             </form>
         </div>
         <div id="history-content"></div>
+        
     </div>
 
     <script>
-        const BASE_URL = 'https://ae0b-106-107-172-1.ngrok-free.app';
+        const BASE_URL = 'https://64af-106-107-172-1.ngrok-free.app';
+
         function logout() {
-            // 执行登出操作，例如清除本地存储的用户信息
-            // 重定向到登录页面
             sessionStorage.clear();
-            location.assign('index.html'); // 假设登录页面文件名为 login.html
-          }
+            location.assign('index.html');
+        }
+
         function backToMain() {
-            // 歷史紀錄頁面的URL
-            // 進行跳轉
             location.assign("main.html?username=" + encodeURIComponent(username));
         }
+
         const urlParams = new URLSearchParams(window.location.search);
         const username = sessionStorage.getItem('username');
-        // 找到要顯示 username 的元素
-        const usernameDisplayElement = document.getElementById('usernameDisplay');
 
-        // 更新元素的內容以顯示 username
+        const usernameDisplayElement = document.getElementById('usernameDisplay');
         if (!username) {
             location.assign('index.html');
         } else {
             usernameDisplayElement.textContent = '使用者: ' + username;
         }
-        document.addEventListener('DOMContentLoaded', function() {
-        var url = `${BASE_URL}/get_recent_upload_times/`;
-        const formData = new FormData();
 
-        formData.append('username', username);
-        axios.post(url,formData)
-            .then(function(response) {
-                var uploadTimes = response.data;
-                var selectElement = document.getElementById('upload-time');
-                selectElement.innerHTML = '';  // 清空选择框
-                
-                uploadTimes.forEach(function(time) {
-                    var option = document.createElement('option');
-                    option.value = time;
-                    option.textContent = time;
-                    selectElement.appendChild(option);
+        document.addEventListener('DOMContentLoaded', function() {
+            const url = `${BASE_URL}/get_recent_upload_times/`;
+            const formData = new FormData();
+            formData.append('username', username);
+
+            axios.post(url, formData)
+                .then(function(response) {
+                    const uploadTimes = response.data;
+                    const selectElement = document.getElementById('upload-time');
+                    selectElement.innerHTML = '';
+                    uploadTimes.forEach(function(time) {
+                        const option = document.createElement('option');
+                        option.value = time;
+                        option.textContent = time;
+                        selectElement.appendChild(option);
+                    });
+                })
+                .catch(function(error) {
+                    console.error('Error fetching upload times:', error);
                 });
-            })
-            .catch(function(error) {
-                console.error('Error fetching upload times:', error);
-            });
         });
 
         function viewHistory() {
-            var selectedTime = document.getElementById('upload-time').value;
-    
-            axios.post(`${BASE_URL}/get_history/`, { username: username, selectedTime: selectedTime })
-                .then(function(response) {
-                    var historyContent = document.getElementById('history-content');
-                    if (response.data.error) {
-                        historyContent.innerHTML = `<p>${response.data.error}</p>`;
-                    } else {
-                        console.log(response.data.uploadedFileUrl,response.data.suggestionContent)
-                        let videoUrl = response.data.uploadedFileUrl;
-                        
-                        var videoHtml = `<div class="content-box">
-                                        <h2>影片檔:</h2>
-                                         <video width="320" height="240" controls>
-                                             <source src="${videoUrl}" type="video/mp4">
-                                             Your browser does not support the video tag.
-                                         </video>
-                                        </div>`;
-                        var suggestionHtml = `<div class="content-box">
-                                            <h2>建議:</h2>
-                                              <pre>${response.data.suggestionContent}</pre>
-                                            </div>`;
-                        historyContent.innerHTML = videoHtml + suggestionHtml;
-                    }
+            const selectedTime = document.getElementById('upload-time').value;
+            axios.post(`${BASE_URL}/get_history/`, { username, selectedTime })
+                .then(response => {
+                if (response.data.error) {
+                    document.getElementById('history-content').innerHTML = `<p>${response.data.error}</p>`;
+                    return;
+                }
+                const videoUrl = response.data.uploadedFileUrl;
+                const suggestionContent = response.data.suggestionContent;
+                    const historyContent = document.getElementById('history-content');
+
+                    historyContent.innerHTML = `
+                        <div class="content-box">
+                            <h2>影片檔:</h2>
+                            <video width="320" height="240" controls preload="metadata">
+                            <source src="${videoUrl}" type="video/mp4" />
+                            您的瀏覽器不支援影片播放。
+                            </video>
+                        </div>
+                        <div class="content-box">
+                            <h2>建議:</h2>
+                            <pre>${suggestionContent}</pre>
+                        </div>
+                        `;
+
+                        // 強制 video 重新載入
+                        const video = historyContent.querySelector('video');
+                        if (video) {
+                        video.load();
+                        video.addEventListener('error', e => {
+                            console.error('影片載入錯誤:', e);
+                            alert('無法載入影片，請確認伺服器是否正常或影片連結是否正確。');
+                        });
+                        video.addEventListener('canplay', () => {
+                            console.log('影片可以播放了');
+                        });
+                        }
                 })
-                .catch(function(error) {
-                    alert("查無資料");
-                    console.error('Error fetching history:', error);
-                });
-        }
-        
+                .catch(async error => {
+                    if (error.response && error.response.status === 503) {
+                        // 影片還沒寫好，1秒後自動重試
+                        console.log('影片正在寫入，1秒後重試...');
+                        setTimeout(viewHistory, 1000);
+                    } else {
+                        alert("查無資料");
+                        console.error('Error fetching history:', error);
+                    }
+                    });
+                }
     </script>
 </body>
 </html>
