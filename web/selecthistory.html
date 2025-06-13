@@ -90,7 +90,7 @@
     </div>
 
     <script>
-        const BASE_URL = 'https://64af-106-107-172-1.ngrok-free.app';
+        const BASE_URL = 'https://7954-106-107-172-1.ngrok-free.app';
 
         function logout() {
             sessionStorage.clear();
@@ -134,55 +134,57 @@
         });
 
         function viewHistory() {
-            const selectedTime = document.getElementById('upload-time').value;
-            axios.post(`${BASE_URL}/get_history/`, { username, selectedTime })
-                .then(response => {
+        const selectedTime = document.getElementById('upload-time').value;
+        axios.post(`${BASE_URL}/get_history/`, { username, selectedTime })
+            .then(response => {
                 if (response.data.error) {
                     document.getElementById('history-content').innerHTML = `<p>${response.data.error}</p>`;
                     return;
                 }
-                const videoUrl = response.data.uploadedFileUrl;
-                const suggestionContent = response.data.suggestionContent;
-                    const historyContent = document.getElementById('history-content');
 
-                    historyContent.innerHTML = `
-                        <div class="content-box">
-                            <h2>影片檔:</h2>
-                            <video width="320" height="240" controls preload="metadata">
+                // 取得原始影片路徑
+                const originalVideoUrl = response.data.uploadedFileUrl;
+
+                // 把 URL 的 /media/ 改成 /stream/
+                // 例如：https://domain/media/username/filename.mp4 → https://domain/stream/username/filename.mp4
+                const videoUrl = originalVideoUrl.replace('/media/', '/stream/');
+
+                const suggestionContent = response.data.suggestionContent;
+                const historyContent = document.getElementById('history-content');
+
+                historyContent.innerHTML = `
+                    <div class="content-box">
+                        <h2>影片檔:</h2>
+                        <video width="320" height="240" controls preload="metadata">
                             <source src="${videoUrl}" type="video/mp4" />
                             您的瀏覽器不支援影片播放。
-                            </video>
-                        </div>
-                        <div class="content-box">
-                            <h2>建議:</h2>
-                            <pre>${suggestionContent}</pre>
-                        </div>
-                        `;
+                        </video>
+                    </div>
+                    <div class="content-box">
+                        <h2>建議:</h2>
+                        <pre>${suggestionContent}</pre>
+                    </div>
+                `;
 
-                        // 強制 video 重新載入
-                        const video = historyContent.querySelector('video');
-                        if (video) {
-                        video.load();
-                        video.addEventListener('error', e => {
-                            console.error('影片載入錯誤:', e);
-                            alert('無法載入影片，請確認伺服器是否正常或影片連結是否正確。');
-                        });
-                        video.addEventListener('canplay', () => {
-                            console.log('影片可以播放了');
-                        });
-                        }
-                })
-                .catch(async error => {
-                    if (error.response && error.response.status === 503) {
-                        // 影片還沒寫好，1秒後自動重試
-                        console.log('影片正在寫入，1秒後重試...');
-                        setTimeout(viewHistory, 1000);
-                    } else {
-                        alert("查無資料");
-                        console.error('Error fetching history:', error);
-                    }
+                const video = historyContent.querySelector('video');
+                if (video) {
+                    video.load();
+                    video.addEventListener('error', e => {
+                        console.error('影片載入錯誤:', e);
+                        alert('無法載入影片，請確認伺服器是否正常或影片連結是否正確。');
                     });
                 }
+            })
+            .catch(error => {
+                if (error.response?.status === 503) {
+                    console.log('影片正在寫入，1秒後重試...');
+                    setTimeout(viewHistory, 1000);
+                } else {
+                    alert("查無資料");
+                    console.error('Error fetching history:', error);
+                }
+            });
+    }
     </script>
 </body>
 </html>
