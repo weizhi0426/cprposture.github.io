@@ -10,70 +10,79 @@
     <link href="./style.css" rel="stylesheet" type="text/css" media="all">
   </head>
   <body>
-    <div class="system_name">
-      <h2>BLS姿勢辨識</h2>
-    </div>
-  
-    <div class="login_page">
-      <div id="container1">
-        <div class="login">  
-          <h3>登入</h3>
-          <form method="POST" onsubmit="return validateLoginForm('login', event);">
-            <input type="text" id="username" name="username" placeholder="帳號" required>
-            <div class="tab"></div>
-            <input type="password" id="password" name="password" placeholder="密碼" required>
-            <div class="tab"></div>
-            <input type="submit" value="登入" class="submit">
-          </form>
-          <h5 onclick="show_hide('signup')" style="cursor: pointer;">註冊帳號</h5>
-          <h5 onclick="location.assign(`${BASE_URL}/accounts/password_reset`)" style="cursor: pointer;">忘記密碼</h5>
-        </div><!-- login end-->
-      </div><!-- container1 end-->
-    </div><!-- login_page end-->
-  
-    <div class="signup_page">
-      <div id="container2">
-        <div class="signup">  
-          <h3>註冊</h3>
-          <form method="POST" onsubmit="return validateLoginForm('signup', event);">
-            <input type="text" id="email" name="email" placeholder="電子信箱" required>
-            <div class="tab"></div>
-            <input type="text" id="username2" name="username" placeholder="帳號" required>
-            <div class="tab"></div>
-            <input type="password" id="password2" name="password" placeholder="密碼" required>
-            <div class="tab"></div>
-            <input type="password" id="confirmPassword" name="confirmPassword" placeholder="確認密碼" required>
-            <div class="tab"></div>
-            <input type="submit" value="註冊" class="submit">
-          </form>
-          <h5 onclick="show_hide('login')" style="cursor: pointer;">登入帳號</h5>
-          <h5 onclick="location.assign(`${BASE_URL}/accounts/password_reset`)" style="cursor: pointer;">忘記密碼</h5>
-        </div><!-- signup end-->
-      </div><!-- container2 end-->
-    </div><!-- signup_page end--> 
+    <div class="main_wrapper">
 
-    <div class="forgot_password_page">
-      <div id="container3">
-        <div class="forgot_password">
-          <h3>忘記密碼</h3>
-          <form method="POST" onsubmit="return validateForgotPasswordForm('forgot_password',event);">
-            <input type="text" id="email2" name="email" placeholder="電子信箱" required>
-            <div class="tab"></div>
-            <input type="submit" value="發送驗證碼" class="submit">
-          </form>
-          <h5 onclick="show_hide('login')" style="cursor: pointer;">登入帳號</h5>
-          <h5 onclick="show_hide('signup')" style="cursor: pointer;">註冊帳號</h5>
-        </div>
+      <div class="image_container">
+        <img src="cute.jpg" alt="Cute Image" />
       </div>
+
+  <div class="form_wrapper">
+
+    <div class="system_name">
+      <h1>BLS姿勢辨識</h1>
     </div>
-  
-    <div id="copyright">
-      <h4>Copyright © 2023 All rights reserved</h4> 
+
+    <!-- 登入表單 -->
+    <div id="container1">
+      <h3>登入</h3>
+      <form method="POST" onsubmit="return validateLoginForm('login', event);">
+        <input type="text" id="username" name="username" placeholder="帳號" required />
+        <input type="password" id="password" name="password" placeholder="密碼" required />
+        <input type="submit" value="登入" class="submit" />
+      </form>
+      <h5 onclick="show_hide('signup')">註冊帳號</h5>
+      <h5 onclick="location.assign(`${BASE_URL}/accounts/password_reset`)">忘記密碼</h5>
     </div>
+
+    <!-- 註冊表單 -->
+    <div id="container2">
+      <h3>註冊</h3>
+      <form method="POST" onsubmit="return validateLoginForm('signup', event);">
+        <input type="email" id="email" name="email" placeholder="電子信箱" required />
+        <input type="text" id="username2" name="username" placeholder="帳號" required />
+        <input type="password" id="password2" name="password" placeholder="密碼" required />
+        <input type="password" id="confirmPassword" name="confirmPassword" placeholder="確認密碼" required />
+        <input type="submit" value="註冊" class="submit" />
+      </form>
+      <h5 onclick="show_hide('login')">登入帳號</h5>
+      <h5 onclick="location.assign(`${BASE_URL}/accounts/password_reset`)">忘記密碼</h5>
+    </div>
+
+    <!-- 忘記密碼表單 -->
+    <div id="container3">
+      <h3>忘記密碼</h3>
+      <form method="POST" onsubmit="return validateForgotPasswordForm('forgot_password', event);">
+        <input type="email" id="email2" name="email" placeholder="電子信箱" required />
+        <input type="submit" value="發送驗證碼" class="submit" />
+      </form>
+      <h5 onclick="show_hide('login')">登入帳號</h5>
+      <h5 onclick="show_hide('signup')">註冊帳號</h5>
+    </div>
+
+  </div>
+
+</div>
+
+<div id="copyright" style="text-align:center; color:#a3a2a3; margin-bottom:30px;">
+  <h4>Copyright © 2023 All rights reserved</h4>
+</div>
   
     <script>
-      const BASE_URL = 'https://53b1-106-107-172-1.ngrok-free.app';
+      const BASE_URL = 'https://8991-106-107-172-1.ngrok-free.app';
+      function show_hide(target) {
+        // 隱藏全部三個容器
+        document.getElementById('container1').style.display = 'none';
+        document.getElementById('container2').style.display = 'none';
+        document.getElementById('container3').style.display = 'none';
 
+        if (target === 'login') {
+          document.getElementById('container1').style.display = 'block';
+        } else if (target === 'signup') {
+          document.getElementById('container2').style.display = 'block';
+        } else if (target === 'forgot_password') {
+          document.getElementById('container3').style.display = 'block';
+        }
+      }
       window.addEventListener('pageshow', function(e) {
         if (e.persisted) {
             location.reload();

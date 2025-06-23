@@ -34,6 +34,7 @@
                 border-radius: 10px;
                 box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* 陰影效果 */
                 align-items: flex-start;
+                padding-bottom: 160px;
             }
         
             #upload-form {
@@ -82,7 +83,7 @@
                 border: 1px solid #ddd;
                 border-radius: 4px;
             }
-        
+            
             button {
                 background-color: #e03737;
                 color: #fff;
@@ -179,7 +180,49 @@
                     margin-left: 0; /* 取消左右間距 */
                 }
             }
-            
+            /* 讓 upload-container 變成相對定位，方便絕對定位按鈕區 */
+                #upload-container {
+                    position: relative;
+                }
+
+                /* 新增一個按鈕容器，這裡假設包住 upload-form */
+                #button-container {
+                    position: absolute;
+                    bottom: 20px;
+                    left: 20px;
+                    background-color: #fff;
+                    padding: 10px;
+                    border-radius: 8px;
+                    max-width: 1000px; /* 可依需求調整寬度 */
+                    z-index: 10;
+                }
+                #reference-image-wrapper {
+                    position: absolute;
+                    bottom: 100px;
+                    right: 100px;
+                    display: flex;
+                    align-items: center;      /* 將兩張圖底部對齊 */
+                    gap: 0;
+                    width: 800px;
+                    max-width: 90vw;
+                    z-index: 10;
+                }
+
+                #reference-image {
+                    width: 65%;
+                    height: auto;
+                    border-radius: 8px;
+                    display: block;
+                }
+
+                #angle-warning-image {
+                    max-width: 35%;              /* 限制最大寬度為容器的 40% */
+                    height: auto;                /* 保持原始比例 */
+                    border-radius: 8px;
+                    display: block;
+                    visibility: hidden;         /* 初始隱藏但保留佔位 */
+                    object-fit: contain;        /* 避免圖片被拉伸 */
+                }
         </style>
     </head>
 <body>
@@ -207,32 +250,40 @@
             <div id="right-result">右手: 尚未分析</div>
             <div id="count-result">次數: 尚未分析</div>
             <div id="blow">吹氣感測: 尚未分析</div>
-            <img id="angle-warning-image" src="straight.jpg" alt="角度示意圖" style="display: none; width: 300px;" />
+            <!--<img id="angle-warning-image" src="straight.jpg" alt="角度示意圖" style="display: none; width: 300px;" /> -->
             
+        </div>
+        
+        <div id="button-container">
+            <form id="upload-form">
+                <input type="file" accept="video/*,image/*" name="video" id="fileInput" />
+                <button type="button" id="uploadButton" onclick="uploadVideo()">上傳影片</button>
+                <div id="loadingMessage">上傳影片中...</div>
+                <button type="button" onclick="Recognize()">開始辨識</button>
+                <button id="startButton" type="button">使用攝像頭</button>
+                <video id="video" autoplay playsinline style="display: none;"></video>
+                <canvas id="canvas" style="display: none;"></canvas>
+                <button id="startBtn" type="button">開始錄影</button>
+                <button id="stopBtn" type="button">停止錄影</button>
+                <button type="button" onclick="refreshPreview()">刷新</button>
+                <button type="button" onclick="standard()">姿勢標準</button>
+                <button type="button" onclick="viewHistory()">查看歷史紀錄</button>
+                <button type="button" onclick="logout()">登出</button>
+            </form>
+        </div>
+        
+        <div id="reference-image-wrapper">
+            <img id="angle-warning-image" src="straight.jpg" alt="角度示意圖" style="visibility: visible;" />
+            <img id="reference-image" src="cute3.jpg" alt="姿勢參考圖" />
         </div>
     </div>
     
-    <div id="upload-form">
-        <form id="video-upload-form">
-            <input type="file" accept="video/*,image/*" name="video" id="fileInput">
-            <button type='button'id="uploadButton" onclick="uploadVideo()">上傳影片</button>
-            <div id="loadingMessage">上傳影片中...</div>
-            <button type="button" onclick="Recognize()">開始辨識</button>
-            <button id="startButton" type="button">使用攝像頭</button>
-            <video id="video" autoplay playsinline style="display: none;"></video> <!-- 隱藏攝像頭畫面 -->
-            <canvas id="canvas" style="display: none;"></canvas>  <!-- 用於繪製影像 -->
-            <button id="startBtn" type="button">開始錄影</button>
-            <button id="stopBtn" type="button">停止錄影</button>
-            <button type="button" onclick="refreshPreview()">刷新</button>
-            <button type="button" onclick="standard()">姿勢標準</button>
-            <button type="button" onclick="viewHistory()">查看歷史紀錄</button>
-            <button type="button" onclick="logout()">登出</button>
-        </form>
+    
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
     <script>
-        const BASE_URL = 'https://53b1-106-107-172-1.ngrok-free.app';
+        const BASE_URL = 'https://8991-106-107-172-1.ngrok-free.app';
         function logout() {
             // 执行登出操作，例如清除本地存储的用户信息
             // 重定向到登录页面
@@ -453,10 +504,10 @@
             isImageShown = true;
             const img = document.getElementById("angle-warning-image");
             img.src = src;
-            img.style.display = "block";
+            img.style.visibility = "visible";  // 顯示但不移除空間
 
             setTimeout(() => {
-                img.style.display = "none";
+                img.style.visibility = "hidden";  // 隱藏但保留空間
                 isImageShown = false;
             }, 5000);
         }
@@ -507,16 +558,16 @@
         console.log("開始錄影");
       }
     });
-
+    
     document.getElementById("stopBtn").addEventListener("click", function (event) {
       event.preventDefault(); // 🚨 阻止頁面重整
       if (socket.readyState === WebSocket.OPEN) {
         socket.send("__stop_recording__");
         console.log("停止錄影");
+        console.log("🚀 POST API URL:", `${BASE_URL}/save_video_realtime/`);
      // 呼叫 Django 的 API 儲存影片歷史紀錄
         axios.post(`${BASE_URL}/save_video_realtime/`, {
-            username: username,
-            video_path: `C:/Users/User/django/BLSdata/recognize/video/${username}/output_latest.mp4`
+            username: username
         })
         .then(response => {
             console.log("儲存紀錄成功", response.data);
