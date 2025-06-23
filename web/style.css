@@ -1,85 +1,161 @@
-*{
-    font-family:微軟正黑體;  
-  }
+* {
+  box-sizing: border-box;
+  font-family: "微軟正黑體", sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background-color: white;
+}
+
+/* 主容器左右排列 */
+.main_wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 300px;
+  padding: 40px;
+  min-height: 100vh;
+}
+
+/* 左邊圖片區 */
+.image_container {
+  flex: 1;
+  max-width: 550px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.image_container img {
+  width: 100%;
+  height: auto;
+  border-radius: 10px;
   
-  body{
-    background-color: white;
+}
+
+/* 右邊表單區 */
+.form_wrapper {
+  flex: 1;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  margin-top: 150px;
+}
+
+/* 標題 */
+.system_name h1 {
+  font-size: 3rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* 表單容器的公共樣式 */
+#container1, #container2, #container3 {
+  border-top: 6px solid #ff0000;
+  background-color: white;
+  padding: 30px 25px 40px 25px;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.1);
+  margin-bottom: 30px;
+}
+
+/* 各表單標題 */
+#container1 h3,
+#container2 h3,
+#container3 h3 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  text-align: center;
+}
+
+/* 表單輸入欄位 */
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  width: 100%;
+  height: 38px;
+  margin: 10px 0;
+  padding: 6px 12px;
+  border: 1px solid #4d4d4d;
+  border-radius: 5px;
+  font-size: 1rem;
+  outline-color: #ff0000;
+}
+
+/* 提交按鈕 */
+.submit {
+  width: 100%;
+  height: 38px;
+  margin: 20px 0 10px 0;
+  background-color: #ddd;
+  border: none;
+  border-radius: 5px;
+  color: black;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.submit:hover {
+  background-color: rgb(255, 70, 70);
+  color: white;
+}
+
+/* 連結文字 */
+h5 {
+  margin: 15px 0 0 0;
+  text-align: center;
+  color: #a3a2a3;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.3s ease;
+}
+
+h5:hover {
+  color: black;
+}
+
+/* 響應式：螢幕小於800px時，隱藏圖片，右側滿寬 */
+@media (max-width: 800px) {
+  .main_wrapper {
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
   }
-  
-  #username, #password, h3, #email, #confirmPassword,#username2, #password2 ,#email2 ,#username3, #password3, #confirmPassword2{
-    width: 200px;
-    height: 30px;
-    margin: 10px;
-    color: rgb(0, 0, 0);
+
+  .image_container {
+    display: none;
   }
-  
-  h5{
-    margin: 20px;
-    color: #a3a2a3;
+
+  .form_wrapper {
+    max-width: 100%;
+    width: 100%;
   }
-  
-  h5:hover{
-    color: black;
+
+  #container1, #container2, #container3 {
+    padding: 20px 15px 30px 15px;
+    margin-bottom: 20px;
   }
-  
-  
-  #container1, #container2, .forgot_password{
-    margin: 50px;
-    padding: 10px;
-    width: 230px;
-    height: 300px;
-    background-color: white;
-    border-radius: 5px;
-    border-top: 10px solid rgb(255, 0, 0);
-    box-shadow: 0 0px 70px rgba(0, 0, 0, 0.1);
-    
-    /*定位對齊*/
-    position:relative;   
-    margin: auto;
-    top: 100px;
-    text-align:center;  
-  }
-  
-  .system_name{
-    /*定位對齊*/
-    position:relative;   
-    margin: auto;
-    top: 100px;
-    text-align:center; 
-  }
-  
-  .submit{
-    color: rgb(0, 0, 0);  
-    background: rgb(221, 221, 221);
-    width: 200px;
-    height: 30px;
-    margin: 10px;
-    padding: 5px;
-    border-radius: 5px;
-    border: 0px;
-  }
-  
-  .submit:hover{
-    color: rgb(221, 221, 221);
-    background: rgb(255, 70, 70);
-  }
-  
-  #container2{
-    visibility: hidden;   /*剛開始消失*/
-    height: 400px;
-  }
-  
-  .forgot_password{
-    visibility: hidden;   /*剛開始消失*/
-    height: 400px;
-  }
-  
-  #copyright{
-    text-align: center;
-    color: #a3a2a3;
-    margin: -200px 0px 0px 0px;
-    font-size: 14px;
-  }
+}
+
+#copyright {
+  text-align: center;
+  color: #a3a2a3;
+  margin: 50px 0 20px 0;
+  font-size: 14px;
+}
+#container1 {
+  display: block; /* 預設顯示登入 */
+}
+
+#container2,
+#container3 {
+  display: none; /* 預設隱藏註冊和忘記密碼 */
+}
   
   input{
     padding: 5px;
