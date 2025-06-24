@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>CPR 姿勢辨識</title>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; background: #f8f8f8; }
+    video, canvas { width: 320px; height: 240px; margin: 10px auto; border: 2px solid #555; }
+    #results { margin-top: 10px; font-size: 1.2em; }
+  </style>
+</head>
+<body>
+  <h1>CPR 姿勢辨識</h1>
+  <button id="startBtn">開啟鏡頭</button>
+  <video id="video" autoplay playsinline muted></video>
+  <canvas id="canvas"></canvas>
+
+  <div id="results">
+    <p id="left">左手角度: --</p>
+    <p id="right">右手角度: --</p>
+    <p id="status">壓胸姿勢: 尚未分析</p>
+  </div>
+
+<script>
+let model = null;
+let session = null;
+const video = document.getElementById("video");
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+const startBtn = document.getElementById("startBtn");
+
+const leftDisplay = document.getElementById("left");
+const rightDisplay = document.getElementById("right");
+const statusDisplay = document.getElementById("status");
+
+// keypoints index
+const LEFT_SHOULDER = 5, LEFT_ELBOW = 7, LEFT_WRIST = 9;
+const RIGHT_SHOULDER = 6, RIGHT_ELBOW = 8, RIGHT_WRIST = 10;
+
+startBtn.onclick = async () => {
+  await setupCamera();
+  session = await ort.InferenceSession.create("m1.onnx");
+  requestAnimationFrame(runDetection);
+};
+
+async function setupCamera() {
+  const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+  video.srcObject = stream;
+  return new Promise(resolve => {
+    video.onloadedmetadata = () => {
+      video.play();
+      resolve();
+    };
+  });
+}
+
+function preprocess() {
+  canvas.width = 640;
+  canvas.height = 640;
+  ctx.drawImage(video, 0, 0, 640, 640);
+  const imageData = ctx.getImageData(0, 0, 640, 640);
+  const { data } = imageData;
+
+  const input = new Float32Array(3 * 640 * 640);
+  for (let i = 0; i < 640 * 640; i++) {
+    input[i] = data[i * 4] / 255;         // R
+    input[i + 640 * 640] = data[i * 4 + 1] / 255; // G
+    input[i + 2 * 640 * 640] = data[i * 4 + 2] / 255; // B
+  }
+
+  return new ort.Tensor("float32", input, [1, 3, 640, 640]);
+}
+
+function calculateAngle(a, b, c) {
+  const ab = { x: b.x - a.x, y: b.y - a.y };
+  const cb = { x: b.x - c.x, y: b.y - c.y };
+  const dot = ab.x * cb.x + ab.y * cb.y;
+  const magAB = Math.sqrt(ab.x ** 2 + ab.y ** 2);
+  const magCB = Math.sqrt(cb.x ** 2 + cb.y ** 2);
+  const angleRad = Math.acos(dot / (magAB * magCB));
+  return (angleRad * 180) / Math.PI;
+}
+
+function drawKeypoints(kps) {
+  ctx.fillStyle = "red";
+  for (const kp of kps) {
+    ctx.beginPath();
+    ctx.arc(kp.x, kp.y, 4, 0, 2 * Math.PI);
+    ctx.fill();
+  }
+}
+
+function processOutput(output) {
+  const tensor = output.dets.data;
+  const numRows = output.dets.dims[1];
+  const results = [];
+
+  for (let i = 0; i < numRows; i++) {
+    const offset = i * 56;
+    const conf = tensor[offset + 4];
+    if (conf < 0.3) continue;
+
+    const kps = [];
+    for (let j = 0; j < 17; j++) {
+      const x = tensor[offset + 6 + j * 3] * 640;
+      const y = tensor[offset + 6 + j * 3 + 1] * 640;
+      const s = tensor[offset + 6 + j * 3 + 2];
+      kps.push({ x, y, score: s });
+    }
+    results.push(kps);
+  }
+
+  return results;
+}
+
+async function runDetection() {
+  const input = preprocess();
+  const output = await session.run({ images: input });
+  const keypointsList = processOutput(output);
+
+  ctx.drawImage(video, 0, 0, 640, 640);
+
+  if (keypointsList.length > 0) {
+    const keypoints = keypointsList[0];
+    drawKeypoints(keypoints);
+
+    const leftAngle = calculateAngle(keypoints[LEFT_SHOULDER], keypoints[LEFT_ELBOW], keypoints[LEFT_WRIST]);
+    const rightAngle = calculateAngle(keypoints[RIGHT_SHOULDER], keypoints[RIGHT_ELBOW], keypoints[RIGHT_WRIST]);
+
+    leftDisplay.textContent = `左手角度: ${leftAngle.toFixed(1)}°`;
+    rightDisplay.textContent = `右手角度: ${rightAngle.toFixed(1)}°`;
+
+    if (leftAngle < 100 && rightAngle < 100) {
+      statusDisplay.textContent = "壓胸姿勢：✅ 正確";
+    } else {
+      statusDisplay.textContent = "壓胸姿勢：❌ 錯誤";
+    }
+  }
+
+  requestAnimationFrame(runDetection);
+}
+</script>
+</body>
+</html>
